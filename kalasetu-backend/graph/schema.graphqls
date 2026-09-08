@@ -13,6 +13,7 @@ type Mutation {
   updateEvent(id: ID!, input: UpdateEventInput!): Event!
   deleteEvent(id: ID!): Boolean!
   onboardUser(input: OnboardingInput!): Boolean!
+  submitApplication(input: CreateApplicationInput!): Application!
 }
 
 type Event {
@@ -47,3 +48,16 @@ input OnboardingInput {
 }
 
 
+type Application {
+    id: ID!
+    opportunityId: ID!
+    applierId: ID!
+    resumeUrl: String!
+    status: String!
+    createdAt: String!
+}
+
+input CreateApplicationInput {
+    opportunityId: ID!
+    resumeUrl: String!
+}

@@ -13,7 +13,7 @@ type Resolver struct {
 	applicationService services.ApplicationService
 }
 
-func NewResolver(eventService services.EventService, userService services.UserService) *Resolver {
+func NewResolver(eventService services.EventService, userService services.UserService, applicationService services.ApplicationService) *Resolver {
 	return &Resolver{
 		eventService:       eventService,
 		userService:        userService,

@@ -61,3 +61,14 @@ func toGraphEvents(events []models.Event) []*model.Event {
 	}
 	return result
 }
+
+func toGraphApplication(app *models.Application) *model.Application {
+	return &model.Application{
+		ID:            strconv.Itoa(app.ID),
+		OpportunityID: strconv.Itoa(app.OpportunityID),
+		ApplierID:     strconv.Itoa(app.ApplierID),
+		ResumeURL:     app.ResumeURL,
+		Status:        app.Status,
+		CreatedAt:     app.CreatedAt.Format(time.RFC3339),
+	}
+}

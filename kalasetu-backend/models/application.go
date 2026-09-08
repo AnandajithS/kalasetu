@@ -11,7 +11,7 @@ type Application struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
-type CreateApplicationRequest struct {
-	OpportunityID int    `json:"opportunity_id" binding:"required"`
-	ResumeURL     string `json:"resume_url" binding:"required"`
+type CreateApplicationInput struct {
+	OpportunityID int
+	ResumeURL     string
 }

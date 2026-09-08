@@ -8,7 +8,7 @@ import (
 )
 
 type ApplicationService interface {
-	Create(ctx context.Context, userID int, req models.CreateApplicationRequest) error
+	Create(ctx context.Context, userID int, input models.CreateApplicationInput) (*models.Application, error)
 }
 
 type applicationService struct {
@@ -21,11 +21,22 @@ func NewApplicationService(applicationRepo repos.ApplicationRepository) Applicat
 	}
 }
 
-func (s *applicationService) Create(ctx context.Context, userID int, req models.CreateApplicationRequest) error {
+func (s *applicationService) Create(
+	ctx context.Context,
+	userID int,
+	input models.CreateApplicationInput,
+) (*models.Application, error) {
+
 	app := &models.Application{
-		OpportunityID: req.OpportunityID,
+		OpportunityID: input.OpportunityID,
 		ApplierID:     userID,
-		ResumeURL:     req.ResumeURL,
+		ResumeURL:     input.ResumeURL,
 	}
-	return s.applicationRepo.Create(ctx, app)
+
+	err := s.applicationRepo.Create(ctx, app)
+	if err != nil {
+		return nil, err
+	}
+
+	return app, nil
 }

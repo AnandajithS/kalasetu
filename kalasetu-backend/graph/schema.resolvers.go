@@ -9,6 +9,7 @@ import (
 	"context"
 	"kalasetu/graph/model"
 	"kalasetu/models"
+	"strconv"
 )
 
 // CreateEvent is the resolver for the createEvent field.
@@ -99,6 +100,36 @@ func (r *mutationResolver) OnboardUser(ctx context.Context, input model.Onboardi
 	}
 
 	return true, nil
+}
+
+// SubmitApplication is the resolver for the submitApplication field.
+func (r *mutationResolver) SubmitApplication(ctx context.Context, input model.CreateApplicationInput) (*model.Application, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	opportunityID, err := strconv.Atoi(input.OpportunityID)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceInput := models.CreateApplicationInput{
+		OpportunityID: opportunityID,
+		ResumeURL:     input.ResumeURL,
+	}
+
+	application, err := r.applicationService.Create(
+		ctx,
+		userID,
+		serviceInput,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return toGraphApplication(application), nil
 }
 
 // Health is the resolver for the health field.
