@@ -61,11 +61,14 @@ func NewApp() *App {
 	userService := services.NewUserService(userRepo)
 	userHandler := handlers.NewUserHandler(userService)
 	
+	eventRepo := repos.NewEventRepository(db)
+	eventService := services.NewEventService(eventRepo)
+
 	apiV1 := r.Group("/api/v1")
 	routes.RegisterAuthRoutes(apiV1, authHandler)
 	routes.RegisterUserRoutes(apiV1, userHandler, middlewares.JWTAuthMiddleware())
 
-	resolver := &graph.Resolver{}
+	resolver := graph.NewResolver(eventService)
 	srv := gqlSetup(resolver)
 
 	return &App{Router: r, Srv: srv, Port: port}

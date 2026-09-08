@@ -2,5 +2,30 @@
 
 package model
 
+type CreateEventInput struct {
+	Name      string `json:"name"`
+	StartDate string `json:"startDate"`
+	Duration  string `json:"duration"`
+}
+
+type Event struct {
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	StartDate string  `json:"startDate"`
+	Duration  string  `json:"duration"`
+	HostID    *string `json:"hostId,omitempty"`
+	HostName  *string `json:"hostName,omitempty"`
+	CreatedAt string  `json:"createdAt"`
+}
+
+type Mutation struct {
+}
+
 type Query struct {
+}
+
+type UpdateEventInput struct {
+	Name      *string `json:"name,omitempty"`
+	StartDate *string `json:"startDate,omitempty"`
+	Duration  *string `json:"duration,omitempty"`
 }

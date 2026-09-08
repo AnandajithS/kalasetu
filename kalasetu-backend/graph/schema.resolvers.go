@@ -7,14 +7,100 @@ package graph
 
 import (
 	"context"
+	"kalasetu/graph/model"
+	"kalasetu/models"
 )
+
+// CreateEvent is the resolver for the createEvent field.
+func (r *mutationResolver) CreateEvent(ctx context.Context, input model.CreateEventInput) (*model.Event, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	event, err := r.eventService.Create(ctx, userID, models.CreateEventInput{
+		Name:      input.Name,
+		StartDate: input.StartDate,
+		Duration:  input.Duration,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return toGraphEvent(event), nil
+}
+
+// UpdateEvent is the resolver for the updateEvent field.
+func (r *mutationResolver) UpdateEvent(ctx context.Context, id string, input model.UpdateEventInput) (*model.Event, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	eventID, err := parseEventID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	event, err := r.eventService.Update(ctx, userID, eventID, models.UpdateEventInput{
+		Name:      input.Name,
+		StartDate: input.StartDate,
+		Duration:  input.Duration,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return toGraphEvent(event), nil
+}
+
+// DeleteEvent is the resolver for the deleteEvent field.
+func (r *mutationResolver) DeleteEvent(ctx context.Context, id string) (bool, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return false, err
+	}
+	eventID, err := parseEventID(id)
+	if err != nil {
+		return false, err
+	}
+
+	if err := r.eventService.Delete(ctx, userID, eventID); err != nil {
+		return false, err
+	}
+	return true, nil
+}
 
 // Health is the resolver for the health field.
 func (r *queryResolver) Health(ctx context.Context) (string, error) {
 	return "OK", nil
 }
 
+// Events is the resolver for the events field.
+func (r *queryResolver) Events(ctx context.Context) ([]*model.Event, error) {
+	events, err := r.eventService.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphEvents(events), nil
+}
+
+// Event is the resolver for the event field.
+func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, error) {
+	eventID, err := parseEventID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	event, err := r.eventService.GetByID(ctx, eventID)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphEvent(event), nil
+}
+
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
