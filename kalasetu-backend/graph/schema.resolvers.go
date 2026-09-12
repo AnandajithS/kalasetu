@@ -68,6 +68,39 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id string) (bool, er
 	return true, nil
 }
 
+// OnboardUser is the resolver for the onboardUser field.
+func (r *mutationResolver) OnboardUser(ctx context.Context, input model.OnboardingInput) (bool, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	var bio string
+	if input.Bio != nil {
+		bio = *input.Bio
+	}
+
+	var profilePicture string
+	if input.ProfilePicture != nil {
+		profilePicture = *input.ProfilePicture
+	}
+
+	onboardingUser := models.OnboardingUser{
+		Name:           input.Name,
+		Role:           input.Role,
+		Location:       input.Location,
+		Labels:         input.Labels,
+		Bio:            bio,
+		ProfilePicture: profilePicture,
+	}
+
+	if err := r.userService.StartOnboarding(ctx, userID, onboardingUser); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 // Health is the resolver for the health field.
 func (r *queryResolver) Health(ctx context.Context) (string, error) {
 	return "OK", nil

@@ -5,7 +5,6 @@ import (
 	"kalasetu/graph"
 	"kalasetu/handlers"
 	"kalasetu/migrations"
-	"kalasetu/middlewares"
 	"kalasetu/repos"
 	"kalasetu/routes"
 	"kalasetu/services"
@@ -59,16 +58,14 @@ func NewApp() *App {
 	authHandler := handlers.NewAuthHandler(authService)
 
 	userService := services.NewUserService(userRepo)
-	userHandler := handlers.NewUserHandler(userService)
 	
 	eventRepo := repos.NewEventRepository(db)
 	eventService := services.NewEventService(eventRepo)
 
 	apiV1 := r.Group("/api/v1")
 	routes.RegisterAuthRoutes(apiV1, authHandler)
-	routes.RegisterUserRoutes(apiV1, userHandler, middlewares.JWTAuthMiddleware())
 
-	resolver := graph.NewResolver(eventService)
+	resolver := graph.NewResolver(eventService, userService)
 	srv := gqlSetup(resolver)
 
 	return &App{Router: r, Srv: srv, Port: port}

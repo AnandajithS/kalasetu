@@ -12,6 +12,7 @@ type Mutation {
   createEvent(input: CreateEventInput!): Event!
   updateEvent(id: ID!, input: UpdateEventInput!): Event!
   deleteEvent(id: ID!): Boolean!
+  onboardUser(input: OnboardingInput!): Boolean!
 }
 
 type Event {
@@ -35,4 +36,14 @@ input UpdateEventInput {
   startDate: String
   duration: String
 }
+
+input OnboardingInput {
+  name: String!
+  role: String!
+  location: String!
+  labels: [String!]
+  bio: String
+  profilePicture: String
+}
+
 

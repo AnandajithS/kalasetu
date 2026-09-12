@@ -21,6 +21,15 @@ type Event struct {
 type Mutation struct {
 }
 
+type OnboardingInput struct {
+	Name           string   `json:"name"`
+	Role           string   `json:"role"`
+	Location       string   `json:"location"`
+	Labels         []string `json:"labels,omitempty"`
+	Bio            *string  `json:"bio,omitempty"`
+	ProfilePicture *string  `json:"profilePicture,omitempty"`
+}
+
 type Query struct {
 }
 
