@@ -19,5 +19,26 @@ sealed class Screen {
 
     data class Profile(val userId: String) : Screen()
     data class EditProfile(val userId: String) : Screen()
+    // --- Artist Flow ---
+    data class ArtistHome(val userId: String) : Screen()
+    data class EventDetails(val eventId: String) : Screen()
+    data class ApplicationForm(val eventId: String) : Screen()
 
+    // --- Organizer Flow ---
+    data object SelectArtistCategories : Screen()
+    data class OrganizerHome(val userId: String) : Screen()
+    data object CreateEvent : Screen()
+    data class OrganizerEventList(val userId: String) : Screen()
+    data object TimelineAndLocation : Screen()
+    data object ReviewEvent : Screen()
+
+    // Applications
+    data class ApplicationStatus(val applicationId: String) : Screen()
+    data class MyApplications(val userId: String) : Screen()
+
+    // Organizer views all applications for a specific event
+    data class EventApplications(val eventId: String) : Screen()
+
+    // Organizer previews one application (with Accept/Reject)
+    data class ApplicationPreview(val applicationId: String) : Screen()
 }
