@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"kalasetu/graph/model"
 	"kalasetu/models"
-	"strconv"
 )
 
 // CreateEvent is the resolver for the createEvent field.
@@ -105,16 +104,142 @@ func (r *mutationResolver) OnboardUser(ctx context.Context, input model.Onboardi
 
 // SubmitApplication is the resolver for the submitApplication field.
 func (r *mutationResolver) SubmitApplication(ctx context.Context, input model.CreateApplicationInput) (*model.Application, error) {
+	panic(fmt.Errorf("not implemented: SubmitApplication - submitApplication"))
+}
+
+// UpdateApplicationStatus is the resolver for the updateApplicationStatus field.
+func (r *mutationResolver) UpdateApplicationStatus(ctx context.Context, id string, status string) (bool, error) {
+	panic(fmt.Errorf("not implemented: UpdateApplicationStatus - updateApplicationStatus"))
+}
+
+// CreatePost is the resolver for the createPost field.
+func (r *mutationResolver) CreatePost(ctx context.Context, input model.CreatePostInput) (*model.Post, error) {
+	panic(fmt.Errorf("not implemented: CreatePost - createPost"))
+}
+
+// UpdatePost is the resolver for the updatePost field.
+func (r *mutationResolver) UpdatePost(ctx context.Context, id string, input model.UpdatePostInput) (*model.Post, error) {
+	panic(fmt.Errorf("not implemented: UpdatePost - updatePost"))
+}
+
+// DeletePost is the resolver for the deletePost field.
+func (r *mutationResolver) DeletePost(ctx context.Context, id string) (bool, error) {
+	panic(fmt.Errorf("not implemented: DeletePost - deletePost"))
+}
+
+// LikePost is the resolver for the likePost field.
+func (r *mutationResolver) LikePost(ctx context.Context, id string) (bool, error) {
+	panic(fmt.Errorf("not implemented: LikePost - likePost"))
+}
+
+// UnLikePost is the resolver for the unLikePost field.
+func (r *mutationResolver) UnLikePost(ctx context.Context, id string) (bool, error) {
+	panic(fmt.Errorf("not implemented: UnLikePost - unLikePost"))
+}
+
+// AddComment is the resolver for the addComment field.
+func (r *mutationResolver) AddComment(ctx context.Context, input model.CreateCommentInput) (*model.Comment, error) {
+	panic(fmt.Errorf("not implemented: AddComment - addComment"))
+}
+
+// UpdateComment is the resolver for the updateComment field.
+func (r *mutationResolver) UpdateComment(ctx context.Context, id string, input model.UpdateCommentInput) (*model.Comment, error) {
+	panic(fmt.Errorf("not implemented: UpdateComment - updateComment"))
+}
+
+// DeleteComment is the resolver for the deleteComment field.
+func (r *mutationResolver) DeleteComment(ctx context.Context, id string) (bool, error) {
+	panic(fmt.Errorf("not implemented: DeleteComment - deleteComment"))
+}
+
+// Health is the resolver for the health field.
+func (r *queryResolver) Health(ctx context.Context) (string, error) {
+	panic(fmt.Errorf("not implemented: Health - health"))
+}
+
+// Events is the resolver for the events field.
+func (r *queryResolver) Events(ctx context.Context) ([]*model.Event, error) {
+	panic(fmt.Errorf("not implemented: Events - events"))
+}
+
+// Event is the resolver for the event field.
+func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, error) {
+	panic(fmt.Errorf("not implemented: Event - event"))
+}
+
+// Application is the resolver for the application field.
+func (r *queryResolver) Application(ctx context.Context, id string) (*model.Application, error) {
+	panic(fmt.Errorf("not implemented: Application - application"))
+}
+
+// MyApplications is the resolver for the myApplications field.
+func (r *queryResolver) MyApplications(ctx context.Context) ([]*model.Application, error) {
+	panic(fmt.Errorf("not implemented: MyApplications - myApplications"))
+}
+
+// ApplicationsByOpportunity is the resolver for the applicationsByOpportunity field.
+func (r *queryResolver) ApplicationsByOpportunity(ctx context.Context, opportunityID string) ([]*model.Application, error) {
+	panic(fmt.Errorf("not implemented: ApplicationsByOpportunity - applicationsByOpportunity"))
+}
+
+// Posts is the resolver for the posts field.
+func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
+	panic(fmt.Errorf("not implemented: Posts - posts"))
+}
+
+// Post is the resolver for the post field.
+func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error) {
+	panic(fmt.Errorf("not implemented: Post - post"))
+}
+
+// LikesOfPost is the resolver for the likesOfPost field.
+func (r *queryResolver) LikesOfPost(ctx context.Context, id string) ([]*model.Author, error) {
+	panic(fmt.Errorf("not implemented: LikesOfPost - likesOfPost"))
+}
+
+// CommentsOfPost is the resolver for the commentsOfPost field.
+func (r *queryResolver) CommentsOfPost(ctx context.Context, id string) ([]*model.Comment, error) {
+	panic(fmt.Errorf("not implemented: CommentsOfPost - commentsOfPost"))
+}
+
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	<<<<<<< HEAD
+// SubmitApplication is the resolver for the submitApplication field.
+func (r *mutationResolver) SubmitApplication(ctx context.Context, input model.CreateApplicationInput) (*model.Application, error) {
+=======
+// CreatePost is the resolver for the createPost field.
+func (r *mutationResolver) CreatePost(ctx context.Context, input model.CreatePostInput) (*model.Post, error) {
+>>>>>>> 3d8babd (feat: add endpoint for posts)
 	userID, err := requireUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+<<<<<<< HEAD
 	opportunityID, err := strconv.Atoi(input.OpportunityID)
+=======
+	categoryID, err := parseOptionalID(input.CategoryID)
+>>>>>>> 3d8babd (feat: add endpoint for posts)
 	if err != nil {
 		return nil, err
 	}
 
+<<<<<<< HEAD
 	serviceInput := models.CreateApplicationInput{
 		OpportunityID: opportunityID,
 		ResumeURL:     input.ResumeURL,
@@ -135,16 +260,162 @@ func (r *mutationResolver) SubmitApplication(ctx context.Context, input model.Cr
 
 // UpdateApplicationStatus is the resolver for the updateApplicationStatus field.
 func (r *mutationResolver) UpdateApplicationStatus(ctx context.Context, id string, status string) (bool, error) {
+=======
+	post, err := r.postService.Create(ctx, userID, models.CreatePostInput{
+		Content:    input.Content,
+		MediaType:  input.MediaType,
+		MediaURI:   input.MediaURI,
+		CategoryID: categoryID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return toGraphPost(post), nil
+}
+
+// UpdatePost is the resolver for the updatePost field.
+func (r *mutationResolver) UpdatePost(ctx context.Context, id string, input model.UpdatePostInput) (*model.Post, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	postID, err := parsePostID(id)
+	if err != nil {
+		return nil, err
+	}
+	categoryID, err := parseOptionalID(input.CategoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	post, err := r.postService.Update(ctx, userID, postID, models.UpdatePostInput{
+		Content:    input.Content,
+		MediaType:  input.MediaType,
+		MediaURI:   input.MediaURI,
+		CategoryID: categoryID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return toGraphPost(post), nil
+}
+
+// DeletePost is the resolver for the deletePost field.
+func (r *mutationResolver) DeletePost(ctx context.Context, id string) (bool, error) {
+>>>>>>> 3d8babd (feat: add endpoint for posts)
 	userID, err := requireUser(ctx)
 	if err != nil {
 		return false, err
 	}
+<<<<<<< HEAD
 	appID, err := strconv.Atoi(id)
 	if err != nil {
 		return false, fmt.Errorf("invalid application id: %s", id)
 	}
 
 	if err := r.applicationService.UpdateStatus(ctx, userID, appID, status); err != nil {
+=======
+	postID, err := parsePostID(id)
+	if err != nil {
+		return false, err
+	}
+
+	if err := r.postService.Delete(ctx, userID, postID); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// LikePost is the resolver for the likePost field.
+func (r *mutationResolver) LikePost(ctx context.Context, id string) (bool, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return false, err
+	}
+	postID, err := parsePostID(id)
+	if err != nil {
+		return false, err
+	}
+	if _, err := r.postService.GetByID(ctx, postID); err != nil {
+		return false, err
+	}
+	if err := r.likeService.Like(ctx, userID, postID); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// UnLikePost is the resolver for the unLikePost field.
+func (r *mutationResolver) UnLikePost(ctx context.Context, id string) (bool, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return false, err
+	}
+	postID, err := parsePostID(id)
+	if err != nil {
+		return false, err
+	}
+	if err := r.likeService.Unlike(ctx, userID, postID); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// AddComment is the resolver for the addComment field.
+func (r *mutationResolver) AddComment(ctx context.Context, input model.CreateCommentInput) (*model.Comment, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	postID, err := parsePostID(input.PostID)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := r.postService.GetByID(ctx, postID); err != nil {
+		return nil, err
+	}
+
+	comment, err := r.commentService.Create(ctx, userID, models.CreateCommentInput{
+		PostID:  postID,
+		Content: input.Content,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return toGraphComment(comment), nil
+}
+
+// UpdateComment is the resolver for the updateComment field.
+func (r *mutationResolver) UpdateComment(ctx context.Context, id string, input model.UpdateCommentInput) (*model.Comment, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	commentID, err := parseCommentID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	comment, err := r.commentService.Update(ctx, userID, commentID, input.Content)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphComment(comment), nil
+}
+
+// DeleteComment is the resolver for the deleteComment field.
+func (r *mutationResolver) DeleteComment(ctx context.Context, id string) (bool, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return false, err
+	}
+	commentID, err := parseCommentID(id)
+	if err != nil {
+		return false, err
+	}
+
+	if err := r.commentService.Delete(ctx, userID, commentID); err != nil {
+>>>>>>> 3d8babd (feat: add endpoint for posts)
 		return false, err
 	}
 	return true, nil
@@ -178,6 +449,7 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, err
 	return toGraphEvent(event), nil
 }
 
+<<<<<<< HEAD
 // Application is the resolver for the application field.
 func (r *queryResolver) Application(ctx context.Context, id string) (*model.Application, error) {
 	userID, err := requireUser(ctx)
@@ -199,10 +471,25 @@ func (r *queryResolver) Application(ctx context.Context, id string) (*model.Appl
 // MyApplications is the resolver for the myApplications field.
 func (r *queryResolver) MyApplications(ctx context.Context) ([]*model.Application, error) {
 	userID, err := requireUser(ctx)
+=======
+// Posts is the resolver for the posts field.
+func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
+	posts, err := r.postService.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphPosts(posts), nil
+}
+
+// Post is the resolver for the post field.
+func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error) {
+	postID, err := parsePostID(id)
+>>>>>>> 3d8babd (feat: add endpoint for posts)
 	if err != nil {
 		return nil, err
 	}
 
+<<<<<<< HEAD
 	apps, err := r.applicationService.ListByApplier(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -226,6 +513,47 @@ func (r *queryResolver) ApplicationsByOpportunity(ctx context.Context, opportuni
 		return nil, err
 	}
 	return toGraphApplications(apps), nil
+=======
+	post, err := r.postService.GetByID(ctx, postID)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphPost(post), nil
+}
+
+// LikesOfPost is the resolver for the likesOfPost field.
+func (r *queryResolver) LikesOfPost(ctx context.Context, id string) ([]*model.Author, error) {
+	postID, err := parsePostID(id)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := r.postService.GetByID(ctx, postID); err != nil {
+		return nil, err
+	}
+
+	authors, err := r.likeService.ListByPost(ctx, postID)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphAuthors(authors), nil
+}
+
+// CommentsOfPost is the resolver for the commentsOfPost field.
+func (r *queryResolver) CommentsOfPost(ctx context.Context, id string) ([]*model.Comment, error) {
+	postID, err := parsePostID(id)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := r.postService.GetByID(ctx, postID); err != nil {
+		return nil, err
+	}
+
+	comments, err := r.commentService.ListByPost(ctx, postID)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphComments(comments), nil
+>>>>>>> 3d8babd (feat: add endpoint for posts)
 }
 
 // Mutation returns MutationResolver implementation.
@@ -233,6 +561,4 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+*/

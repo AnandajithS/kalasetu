@@ -51,6 +51,74 @@ input OnboardingInput {
   profilePicture: String
 }
 
+type Post {
+  id: ID!
+  userId: ID!
+  userName: String!
+  content: String!
+  mediaType: String
+  mediaUri: String
+  categoryId: ID
+  categoryName: String
+  likeCount: Int!
+  commentCount: Int!
+  createdAt: String!
+}
+
+type Author {
+  id: ID!
+  name: String!
+}
+
+type Comment {
+  id: ID!
+  postId: ID!
+  userId: ID!
+  userName: String!
+  content: String!
+  createdAt: String!
+}
+
+input CreatePostInput {
+  content: String!
+  mediaType: String
+  mediaUri: String
+  categoryId: ID
+}
+
+input UpdatePostInput {
+  content: String
+  mediaType: String
+  mediaUri: String
+  categoryId: ID
+}
+
+input CreateCommentInput {
+  postId: ID!
+  content: String!
+}
+
+input UpdateCommentInput {
+  content: String!
+}
+
+extend type Mutation {
+  createPost(input: CreatePostInput!): Post!
+  updatePost(id: ID!, input: UpdatePostInput!): Post!
+  deletePost(id: ID!): Boolean!
+  likePost(id: ID!): Boolean!
+  unLikePost(id: ID!): Boolean!
+  addComment(input: CreateCommentInput!): Comment!
+  updateComment(id: ID!, input: UpdateCommentInput!): Comment!
+  deleteComment(id: ID!): Boolean!
+}
+
+extend type Query {
+  posts: [Post!]!
+  post(id: ID!): Post
+  likesOfPost(id: ID!): [Author!]!
+  commentsOfPost(id: ID!): [Comment!]!
+}
 
 type Application {
     id: ID!

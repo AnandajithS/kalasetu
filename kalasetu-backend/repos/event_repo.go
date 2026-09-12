@@ -89,7 +89,7 @@ func (r *eventRepository) List(ctx context.Context) ([]models.Event, error) {
 	return events, rows.Err()
 }
 
-// Update sets only the fields that were provided (NULL input → COALESCE keeps the existing value).
+// Update sets only the fields that were provided (For NULL input, COALESCE keeps the existing value).
 func (r *eventRepository) Update(ctx context.Context, id int, input models.UpdateEventInput) error {
 	query := `
 		UPDATE events
