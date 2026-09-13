@@ -9,7 +9,13 @@ import com.example.kalasetu.features.onboarding.*
 import com.example.kalasetu.features.profile.*
 import com.example.kalasetu.navigation.Screen
 import com.example.kalasetu.theme.KalasetuTheme
-import kotlin.random.Random
+import kotlinx.datetime.LocalDate
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kalasetu.repository.EventRepository
+import kotlinx.coroutines.launch
+import com.example.kalasetu.repository.AuthRepository
+
+
 
 @Composable
 fun App() {
@@ -20,6 +26,9 @@ fun App() {
     var currentProfile by remember { mutableStateOf<Profile?>(null) }
     var draftEvent by remember { mutableStateOf(EventDraft()) }
     val sharedEventListViewModel: EventListViewModel = viewModel()
+    val eventRepository = remember { EventRepository() }
+    val scope = rememberCoroutineScope()
+
 
     KalasetuTheme {
         when (val currentScreen = screen) {
@@ -29,9 +38,35 @@ fun App() {
                 screen = Screen.AuthSignup
             }
             Screen.AuthSignup -> AuthSignupScreen(
-                onSignUp = { screen = Screen.AuthOtp },
-                onLogin = { screen = Screen.AuthLogin },
-                onBack = { screen = Screen.OnboardingWelcome },
+                onSignUp = { name, email, password ->
+                    scope.launch {
+                        val result = AuthRepository().register(
+                            name = name,
+                            email = email,
+                            password = password
+                        )
+
+                        if (result.isSuccess) {
+                            println("========== APP SIGNUP SUCCESS ==========")
+
+                            screen = Screen.AuthLogin
+                        } else {
+                            println(
+                                "SIGNUP FAILED: ${
+                                    result.exceptionOrNull()?.message
+                                }"
+                            )
+                        }
+                    }
+                },
+
+                onLogin = {
+                    screen = Screen.AuthLogin
+                },
+
+                onBack = {
+                    screen = Screen.AuthLogin
+                },
             )
             Screen.AuthOtp -> AuthOtpScreen(
                 onVerify = { screen = Screen.OnboardingBasicInfo },
@@ -39,9 +74,38 @@ fun App() {
                 onBack = { screen = Screen.AuthSignup },
             )
             Screen.AuthLogin -> AuthLoginScreen(
-                onLogin = { screen = Screen.OnboardingBasicInfo },
-                onSignUp = { screen = Screen.AuthSignup },
-                onBack = { screen = Screen.AuthSignup },
+                onLogin = { email, password ->
+                    scope.launch {
+
+                        val result = AuthRepository().login(
+                            email = email,
+                            password = password
+                        )
+
+                        if (result.isSuccess) {
+
+                            println("========== APP LOGIN SUCCESS ==========")
+
+                            screen = Screen.OnboardingBasicInfo
+
+                        } else {
+
+                            println(
+                                "LOGIN FAILED: ${
+                                    result.exceptionOrNull()?.message
+                                }"
+                            )
+                        }
+                    }
+                },
+
+                onSignUp = {
+                    screen = Screen.AuthSignup
+                },
+
+                onBack = {
+                    screen = Screen.AuthSignup
+                },
             )
             Screen.OnboardingBasicInfo -> OnboardingBasicInfoScreen(
                 onNext = { name, role ->
@@ -210,10 +274,48 @@ fun App() {
                 onBack = { screen = Screen.TimelineAndLocation },
                 onEdit = { screen = Screen.CreateEvent },
                 onPublish = {
-                    val newId = "event_${Random.nextLong()}"
-                    sharedEventListViewModel.addEvent(draftEvent.toEvent(newId))
-                    draftEvent = EventDraft()
-                    screen = Screen.OrganizerHome(userId = "123")
+                    println("========== PUBLISH CLICKED ==========")
+                    val startDate = draftEvent.startDate
+
+                    val duration = if (draftEvent.startDate != null && draftEvent.endDate != null) {
+                        val startDate = draftEvent.startDate!!
+                        val endDate = draftEvent.endDate!!
+
+                        val days = endDate.toEpochDays() - startDate.toEpochDays() + 1
+                        "$days days"
+                    } else {
+                        "1 day"
+                    }
+
+                    scope.launch {
+
+                        try {
+                            println("========== CALLING GRAPHQL ==========")
+                            val response = eventRepository.createEvent(
+                                name = draftEvent.title.trim(),
+                                startDate = startDate?.toString() ?: "",
+                                duration = duration
+                            )
+
+                            if (response.data != null && response.exception == null && response.errors.isNullOrEmpty()) {
+                                println("========== EVENT CREATED SUCCESSFULLY ==========")
+
+                                draftEvent = EventDraft()
+                                screen = Screen.OrganizerHome(userId = "123")
+                            } else {
+                                println("========== EVENT CREATION FAILED ==========")
+                                println("data = ${response.data}")
+                                println("errors = ${response.errors}")
+                                println("exception = ${response.exception}")
+                            }
+
+                        } catch (e: Exception) {
+
+                            println("NETWORK ERROR: ${e.message}")
+                            e.printStackTrace()
+
+                        }
+                    }
                 },
             )
 
