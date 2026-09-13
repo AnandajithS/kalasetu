@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun AuthSignupScreen(
-    onSignUp: () -> Unit,
+    onSignUp: (String) -> Unit,
     onLogin: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -84,7 +84,7 @@ fun AuthSignupScreen(
             Spacer(Modifier.height(24.dp))
 
             Button(
-                onClick = onSignUp,
+                onClick = { onSignUp(email) },
                 enabled = canSignUp,
                 modifier = Modifier
                     .fillMaxWidth()

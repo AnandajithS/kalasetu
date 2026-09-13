@@ -20,4 +20,6 @@ sealed class Screen {
     data class Profile(val userId: String) : Screen()
     data class EditProfile(val userId: String) : Screen()
 
+    data object Feed : Screen()
+    data object Store : Screen()
 }

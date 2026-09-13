@@ -30,6 +30,7 @@ fun ProfileScreen(
     userId: String,
     onEditProfile: () -> Unit = {},
     onShare: () -> Unit = {},
+    onBack: () -> Unit = {},
 ) {
     var uiState by remember { mutableStateOf(ProfileUiState()) }
 
@@ -79,7 +80,8 @@ fun ProfileScreen(
                     uiState = uiState.copy(selectedTab = tab)
                 },
                 onEditProfile = onEditProfile,
-                onShare = onShare
+                onShare = onShare,
+                onBack = onBack
             )
         }
     }
@@ -91,7 +93,8 @@ private fun ProfileContent(
     selectedTab: ProfileTab,
     onTabSelected: (ProfileTab) -> Unit,
     onEditProfile: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
+    onBack: () -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -104,7 +107,8 @@ private fun ProfileContent(
         ProfileHeader(
             profile = profile,
             onEditProfile = onEditProfile,
-            onShare = onShare
+            onShare = onShare,
+            onBack = onBack
         )
 
         ProfileInfo(profile = profile)
