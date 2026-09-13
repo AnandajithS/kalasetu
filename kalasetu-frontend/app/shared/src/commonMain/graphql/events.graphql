@@ -20,3 +20,15 @@ query GetEvents {
         createdAt
     }
 }
+
+query GetUserEvents {
+    userEvents {
+        id
+        name
+        hostId
+        hostName
+        startDate
+        duration
+        createdAt
+    }
+}

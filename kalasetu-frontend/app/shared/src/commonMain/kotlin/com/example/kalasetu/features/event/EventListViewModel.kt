@@ -15,53 +15,120 @@ class EventListViewModel : ViewModel() {
     private val _events = MutableStateFlow<List<Event>>(emptyList())
     val events: StateFlow<List<Event>> = _events
 
-    fun loadEvents() {
+    fun loadEvents(isOrganizer: Boolean) {
+
         viewModelScope.launch {
 
             try {
+
                 println("========== LOADING EVENTS ==========")
 
-                val response = repository.getEvents()
+                val appEvents: List<Event> = if (isOrganizer) {
+                    val response = repository.getUserEvents()
 
-                if (!response.errors.isNullOrEmpty()) {
-                    println("========== GET EVENTS FAILED ==========")
-                    println("errors = ${response.errors}")
-                    return@launch
-                }
+                    if (!response.errors.isNullOrEmpty()) {
+                        println("========== GET USER EVENTS FAILED ==========")
+                        println("errors = ${response.errors}")
+                        return@launch
+                    }
 
-                val backendEvents = response.data?.events.orEmpty()
+                    val backendEvents =
+                        response.data?.userEvents.orEmpty()
 
-                println("Events received: ${backendEvents.size}")
+                    println(
+                        "User events received: ${backendEvents.size}"
+                    )
 
-                val appEvents = backendEvents.mapNotNull { backendEvent ->
+                    backendEvents.mapNotNull { backendEvent ->
 
-                    try {
-                        Event(
-                            id = backendEvent.id,
-                            title = backendEvent.name,
-                            description = "",
-                            location = "",
-                            startDate = LocalDate.parse(backendEvent.startDate),
-                            endDate = null,
-                            organizerName = backendEvent.hostName ?: "",
-                            email = "",
-                            phone = "",
-                            coverImageBytes = null,
-                            galleryBytes = emptyList(),
-                            categories = emptyList()
-                        )
-                    } catch (e: Exception) {
-                        println(
-                            "Failed to parse event ${backendEvent.id}: ${e.message}"
-                        )
-                        null
+                        try {
+
+                            Event(
+                                id = backendEvent.id,
+                                title = backendEvent.name,
+                                description = "",
+                                location = "",
+                                startDate = LocalDate.parse(
+                                    backendEvent.startDate
+                                ),
+                                endDate = null,
+                                organizerName =
+                                    backendEvent.hostName ?: "",
+                                email = "",
+                                phone = "",
+                                coverImageBytes = null,
+                                galleryBytes = emptyList(),
+                                categories = emptyList()
+                            )
+
+                        } catch (e: Exception) {
+
+                            println(
+                                "Failed to parse event " +
+                                        "${backendEvent.id}: ${e.message}"
+                            )
+
+                            null
+                        }
+                    }
+
+                } else {
+
+                    val response = repository.getEvents()
+
+                    if (!response.errors.isNullOrEmpty()) {
+                        println("========== GET EVENTS FAILED ==========")
+                        println("errors = ${response.errors}")
+                        return@launch
+                    }
+
+                    val backendEvents =
+                        response.data?.events.orEmpty()
+
+                    println(
+                        "All events received: ${backendEvents.size}"
+                    )
+
+                    backendEvents.mapNotNull { backendEvent ->
+
+                        try {
+
+                            Event(
+                                id = backendEvent.id,
+                                title = backendEvent.name,
+                                description = "",
+                                location = "",
+                                startDate = LocalDate.parse(
+                                    backendEvent.startDate
+                                ),
+                                endDate = null,
+                                organizerName =
+                                    backendEvent.hostName ?: "",
+                                email = "",
+                                phone = "",
+                                coverImageBytes = null,
+                                galleryBytes = emptyList(),
+                                categories = emptyList()
+                            )
+
+                        } catch (e: Exception) {
+
+                            println(
+                                "Failed to parse event " +
+                                        "${backendEvent.id}: ${e.message}"
+                            )
+
+                            null
+                        }
                     }
                 }
 
                 _events.value = appEvents
 
                 println("========== EVENTS LOADED ==========")
-                println("Events displayed: ${appEvents.size}")
+                println(
+                    "Events displayed: ${appEvents.size}"
+                )
 
             } catch (e: Exception) {
 

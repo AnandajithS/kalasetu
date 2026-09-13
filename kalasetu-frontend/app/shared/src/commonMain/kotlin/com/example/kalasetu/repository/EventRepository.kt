@@ -4,6 +4,7 @@ import com.example.kalasetu.CreateEventMutation
 import com.example.kalasetu.data.ApiClient
 import com.example.kalasetu.type.CreateEventInput
 import com.example.kalasetu.GetEventsQuery
+import com.example.kalasetu.GetUserEventsQuery
 import com.example.kalasetu.BuildKonfig
 
 private val baseUrl = BuildKonfig.API_BASE_URL
@@ -32,6 +33,17 @@ class EventRepository {
             .execute()
             .also { response ->
                 println("========== GET EVENTS RESPONSE ==========")
+                println("data = ${response.data}")
+                println("errors = ${response.errors}")
+                println("exception = ${response.exception}")
+            }
+
+    suspend fun getUserEvents() =
+        apolloClient
+            .query(GetUserEventsQuery())
+            .execute()
+            .also { response ->
+                println("========== GET USER EVENTS RESPONSE ==========")
                 println("data = ${response.data}")
                 println("errors = ${response.errors}")
                 println("exception = ${response.exception}")

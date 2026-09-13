@@ -2,6 +2,7 @@ type Query {
   health: String!
   events: [Event!]!
   event(id: ID!): Event
+  userEvents: [Event!]!
 }
 
 type Mutation {

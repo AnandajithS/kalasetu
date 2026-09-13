@@ -8,6 +8,7 @@ package graph
 import (
 	"context"
 	"kalasetu/graph/model"
+	"kalasetu/middlewares"
 	"kalasetu/models"
 )
 
@@ -127,6 +128,21 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, err
 		return nil, err
 	}
 	return toGraphEvent(event), nil
+}
+
+// UserEvents is the resolver for the userEvents field.
+func (r *queryResolver) UserEvents(ctx context.Context) ([]*model.Event, error) {
+	userID, err := middlewares.GetUserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	events, err := r.eventService.ListByUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return toGraphEvents(events), nil
 }
 
 // Mutation returns MutationResolver implementation.

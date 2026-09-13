@@ -34,7 +34,7 @@ fun OrganizerHomeScreen(
 ) {
     val events by viewModel.events.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {
-        viewModel.loadEvents()
+        viewModel.loadEvents(isOrganizer = true)
     }
     Scaffold(
         topBar = {

@@ -86,7 +86,7 @@ fun App() {
 
                             println("========== APP LOGIN SUCCESS ==========")
 
-                            screen = Screen.OnboardingBasicInfo
+                            screen = Screen.OrganizerHome(userId = "123")
 
                         } else {
 
