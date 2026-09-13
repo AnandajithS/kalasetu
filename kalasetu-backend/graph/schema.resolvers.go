@@ -7,6 +7,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"kalasetu/graph/model"
 	"kalasetu/models"
 	"strconv"
@@ -132,6 +133,11 @@ func (r *mutationResolver) SubmitApplication(ctx context.Context, input model.Cr
 	return toGraphApplication(application), nil
 }
 
+// UpdateApplicationStatus is the resolver for the updateApplicationStatus field.
+func (r *mutationResolver) UpdateApplicationStatus(ctx context.Context, input string) (bool, error) {
+	panic(fmt.Errorf("not implemented: UpdateApplicationStatus - updateApplicationStatus"))
+}
+
 // Health is the resolver for the health field.
 func (r *queryResolver) Health(ctx context.Context) (string, error) {
 	return "OK", nil
@@ -158,6 +164,11 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, err
 		return nil, err
 	}
 	return toGraphEvent(event), nil
+}
+
+// Application is the resolver for the application field.
+func (r *queryResolver) Application(ctx context.Context, id string) (*model.Application, error) {
+	panic(fmt.Errorf("not implemented: Application - application"))
 }
 
 // Mutation returns MutationResolver implementation.

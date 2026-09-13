@@ -6,6 +6,7 @@ type Query {
   health: String!
   events: [Event!]!
   event(id: ID!): Event
+  application(id: ID!): Application
 }
 
 type Mutation {
@@ -14,6 +15,7 @@ type Mutation {
   deleteEvent(id: ID!): Boolean!
   onboardUser(input: OnboardingInput!): Boolean!
   submitApplication(input: CreateApplicationInput!): Application!
+  updateApplicationStatus(input: String!): Boolean!
 }
 
 type Event {

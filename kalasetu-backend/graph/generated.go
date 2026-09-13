@@ -56,17 +56,19 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateEvent       func(childComplexity int, input model.CreateEventInput) int
-		DeleteEvent       func(childComplexity int, id string) int
-		OnboardUser       func(childComplexity int, input model.OnboardingInput) int
-		SubmitApplication func(childComplexity int, input model.CreateApplicationInput) int
-		UpdateEvent       func(childComplexity int, id string, input model.UpdateEventInput) int
+		CreateEvent             func(childComplexity int, input model.CreateEventInput) int
+		DeleteEvent             func(childComplexity int, id string) int
+		OnboardUser             func(childComplexity int, input model.OnboardingInput) int
+		SubmitApplication       func(childComplexity int, input model.CreateApplicationInput) int
+		UpdateApplicationStatus func(childComplexity int, input string) int
+		UpdateEvent             func(childComplexity int, id string, input model.UpdateEventInput) int
 	}
 
 	Query struct {
-		Event  func(childComplexity int, id string) int
-		Events func(childComplexity int) int
-		Health func(childComplexity int) int
+		Application func(childComplexity int, id string) int
+		Event       func(childComplexity int, id string) int
+		Events      func(childComplexity int) int
+		Health      func(childComplexity int) int
 	}
 }
 
@@ -76,11 +78,13 @@ type MutationResolver interface {
 	DeleteEvent(ctx context.Context, id string) (bool, error)
 	OnboardUser(ctx context.Context, input model.OnboardingInput) (bool, error)
 	SubmitApplication(ctx context.Context, input model.CreateApplicationInput) (*model.Application, error)
+	UpdateApplicationStatus(ctx context.Context, input string) (bool, error)
 }
 type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
 	Events(ctx context.Context) ([]*model.Event, error)
 	Event(ctx context.Context, id string) (*model.Event, error)
+	Application(ctx context.Context, id string) (*model.Application, error)
 }
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -221,6 +225,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SubmitApplication(childComplexity, args["input"].(model.CreateApplicationInput)), true
+	case "Mutation.updateApplicationStatus":
+		if e.ComplexityRoot.Mutation.UpdateApplicationStatus == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateApplicationStatus_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateApplicationStatus(childComplexity, args["input"].(string)), true
 	case "Mutation.updateEvent":
 		if e.ComplexityRoot.Mutation.UpdateEvent == nil {
 			break
@@ -233,6 +248,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Mutation.UpdateEvent(childComplexity, args["id"].(string), args["input"].(model.UpdateEventInput)), true
 
+	case "Query.application":
+		if e.ComplexityRoot.Query.Application == nil {
+			break
+		}
+
+		args, err := ec.field_Query_application_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Application(childComplexity, args["id"].(string)), true
 	case "Query.event":
 		if e.ComplexityRoot.Query.Event == nil {
 			break
@@ -407,6 +433,17 @@ func (ec *executionContext) field_Mutation_submitApplication_args(ctx context.Co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateApplicationStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateEvent_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -431,6 +468,17 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_application_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -1125,6 +1173,47 @@ func (ec *executionContext) fieldContext_Mutation_submitApplication(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateApplicationStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateApplicationStatus,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateApplicationStatus(ctx, fc.Args["input"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateApplicationStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateApplicationStatus_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_health(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1250,6 +1339,61 @@ func (ec *executionContext) fieldContext_Query_event(ctx context.Context, field 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_event_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_application(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_application,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().Application(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalOApplication2ᚖkalasetuᚋgraphᚋmodelᚐApplication,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_application(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Application_id(ctx, field)
+			case "opportunityId":
+				return ec.fieldContext_Application_opportunityId(ctx, field)
+			case "applierId":
+				return ec.fieldContext_Application_applierId(ctx, field)
+			case "resumeUrl":
+				return ec.fieldContext_Application_resumeUrl(ctx, field)
+			case "status":
+				return ec.fieldContext_Application_status(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Application_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_application_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3189,6 +3333,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateApplicationStatus":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateApplicationStatus(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3285,6 +3436,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_event(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "application":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_application(ctx, field)
 				return res
 			}
 
@@ -3911,6 +4081,13 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalOApplication2ᚖkalasetuᚋgraphᚋmodelᚐApplication(ctx context.Context, sel ast.SelectionSet, v *model.Application) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Application(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (bool, error) {
