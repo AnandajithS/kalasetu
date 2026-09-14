@@ -14,8 +14,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kalasetu.repository.EventRepository
 import kotlinx.coroutines.launch
 import com.example.kalasetu.repository.AuthRepository
-
-
+import com.example.kalasetu.repository.OnboardingRepository
+import com.example.kalasetu.features.onboarding.OnboardingData
 
 @Composable
 fun App() {
@@ -28,34 +28,45 @@ fun App() {
     val sharedEventListViewModel: EventListViewModel = viewModel()
     val eventRepository = remember { EventRepository() }
     val scope = rememberCoroutineScope()
+    var onboardingData by remember { mutableStateOf(OnboardingData()) }
+    val onboardingRepository = remember { OnboardingRepository() }
 
 
     KalasetuTheme {
         when (val currentScreen = screen) {
 
-            // ─── Onboarding & Auth ───
+
             Screen.OnboardingWelcome -> OnboardingWelcomeScreen {
                 screen = Screen.AuthSignup
             }
             Screen.AuthSignup -> AuthSignupScreen(
                 onSignUp = { name, email, password ->
                     scope.launch {
-                        val result = AuthRepository().register(
+
+                        val registerResult = AuthRepository().register(
                             name = name,
                             email = email,
                             password = password
                         )
 
-                        if (result.isSuccess) {
-                            println("========== APP SIGNUP SUCCESS ==========")
+                        if (registerResult.isSuccess) {
 
-                            screen = Screen.AuthLogin
-                        } else {
-                            println(
-                                "SIGNUP FAILED: ${
-                                    result.exceptionOrNull()?.message
-                                }"
+                            val loginResult = AuthRepository().login(
+                                email = email,
+                                password = password
                             )
+
+                            if (loginResult.isSuccess) {
+
+                                onboardingData = OnboardingData(
+                                    name = name
+                                )
+
+                                screen = Screen.OnboardingBasicInfo
+
+                            } else {
+                                screen = Screen.AuthLogin
+                            }
                         }
                     }
                 },
@@ -99,42 +110,72 @@ fun App() {
                     }
                 },
 
-                onSignUp = {
-                    screen = Screen.AuthSignup
-                },
-
-                onBack = {
-                    screen = Screen.AuthSignup
-                },
+                onSignUp = { screen = Screen.AuthSignup },
+                onBack = { screen = Screen.AuthSignup },
             )
             Screen.OnboardingBasicInfo -> OnboardingBasicInfoScreen(
                 onNext = { name, role ->
                     userName = name
                     selectedRole = role
+                    onboardingData = onboardingData.copy(
+                        name = name,
+                        role = role
+                    )
                     screen = Screen.OnboardingLocation
                 },
-            ) { screen = Screen.OnboardingWelcome }
+                onBack = { screen = Screen.OnboardingWelcome }
+            )
             Screen.OnboardingLocation -> OnboardingLocationScreen(
                 onNext = { location ->
                     userLocation = location
+                    onboardingData = onboardingData.copy(
+                        location = location
+                    )
                     screen = when (selectedRole) {
                         "Artist" -> Screen.ArtistExperience
                         "Event Organizer" -> Screen.OrganizerType
                         else -> Screen.AudienceInterests
                     }
                 },
-            ) { screen = Screen.OnboardingBasicInfo }
-            Screen.ArtistExperience -> ExperienceScreen(onNext = { screen = Screen.OnboardingDone }) { screen = Screen.OnboardingLocation }
-            Screen.OrganizerType -> OrganizerTypeScreen(onNext = { screen = Screen.OnboardingDone }) { screen = Screen.OnboardingLocation }
+                onBack = { screen = Screen.OnboardingBasicInfo }
+            )
+            Screen.ArtistExperience -> ExperienceScreen(
+                onNext = { experience ->
+                    onboardingData = onboardingData.copy(bio = experience)
+                    screen = Screen.OnboardingDone
+                },
+                onBack = { screen = Screen.OnboardingLocation }
+            )
+            Screen.OrganizerType -> OrganizerTypeScreen( onNext = {screen = Screen.OrganizerIntent}, onBack = { screen = Screen.OnboardingLocation })
             Screen.OrganizerIntent -> OrganizerIntentScreen(onNext = { screen = Screen.OnboardingDone }) { screen = Screen.OrganizerType }
             Screen.AudienceInterests -> InterestsScreen(onNext = { screen = Screen.OnboardingDone }) { screen = Screen.OnboardingLocation }
 
-            Screen.OnboardingDone -> OnboardingDoneScreen {
-                screen = when (selectedRole) {
-                    "Artist" -> Screen.ArtistHome(userId = "123")
-                    "Event Organizer" -> Screen.OrganizerHome(userId = "123")
-                    else -> Screen.Profile(userId = "123")
-                }
+            Screen.OnboardingDone -> {
+                OnboardingDoneScreen(
+                    onFinish = {
+                        scope.launch {
+                            val response = onboardingRepository.onboardUser(
+                                name = onboardingData.name,
+                                role = onboardingData.role,
+                                location = onboardingData.location,
+                                labels = onboardingData.labels,
+                                bio = onboardingData.bio,
+                                profilePicture = onboardingData.profilePicture
+                            )
+
+                            if (
+                                response.errors.isNullOrEmpty() &&
+                                response.data?.onboardUser == true
+                            ) {
+                                screen = Screen.ArtistHome(
+                                    userId = AuthStore.userId?.toString() ?: ""
+                                )
+                            } else {
+                                println("ONBOARDING FAILED: ${response.errors}")
+                            }
+                        }
+                    }
+                )
             }
 
             // ─── Profile ───

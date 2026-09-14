@@ -9,6 +9,7 @@ type Mutation {
   createEvent(input: CreateEventInput!): Event!
   updateEvent(id: ID!, input: UpdateEventInput!): Event!
   deleteEvent(id: ID!): Boolean!
+  onboardUser(input: OnboardingInput!): Boolean!
 }
 
 type Event {

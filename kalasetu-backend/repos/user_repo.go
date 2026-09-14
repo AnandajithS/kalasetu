@@ -6,6 +6,7 @@ import (
 	"errors"
 	"kalasetu/models"
 	"time"
+	"fmt"
 )
 
 type UserRepository interface {
@@ -111,7 +112,7 @@ func (r *userRepository) StartOnboarding(ctx context.Context, userID int, onboar
 	var roleID int
 	err = tx.QueryRowContext(ctx, query, onboardingUser.Role).Scan(&roleID)
 	if err != nil {
-		return err
+		return fmt.Errorf("role lookup failed for %q: %w", onboardingUser.Role, err)
 	}
 
 	query = `
@@ -131,7 +132,7 @@ func (r *userRepository) StartOnboarding(ctx context.Context, userID int, onboar
 		var labelID int
 		err = tx.QueryRowContext(ctx, query, labelName).Scan(&labelID)
 		if err != nil {
-			return err
+			return fmt.Errorf("label lookup failed for %q: %w", labelName, err)
 		}
 
 		query = `
