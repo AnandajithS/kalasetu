@@ -52,6 +52,7 @@ kotlin {
             implementation(libs.peekaboo.image.picker)
             implementation(libs.peekaboo.ui)
             implementation(libs.androidx.activity.compose)
+            implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.0-rc01")
         }
         commonMain.dependencies {
             api(projects.core)
@@ -67,6 +68,16 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.coil.compose)
+            implementation(libs.filekit.compose)
+            implementation(compose.materialIconsExtended)
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+            implementation("io.coil-kt.coil3:coil-compose:3.0.0-rc01")
+            implementation("io.github.vinceglb:filekit-compose:0.8.0")
+            implementation("io.github.vinceglb:filekit-core:0.8.0")
+            implementation("io.github.vinceglb:filekit-compose:0.8.0")
+            implementation("io.github.vinceglb:filekit-core:0.8.7")
+            implementation("io.github.vinceglb:filekit-compose:0.8.7")
+            implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.5.4")
         }
         iosMain.dependencies {
             implementation(libs.peekaboo.image.picker)

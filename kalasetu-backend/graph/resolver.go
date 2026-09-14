@@ -5,4 +5,16 @@ package graph
 // It serves as dependency injection for your app, add any dependencies you require
 // here.
 
-type Resolver struct{}
+import "kalasetu/services"
+
+type Resolver struct {
+	eventService services.EventService
+	userService  services.UserService
+}
+
+func NewResolver(eventService services.EventService, userService services.UserService) *Resolver {
+	return &Resolver{
+		eventService: eventService,
+		userService:  userService,
+	}
+}

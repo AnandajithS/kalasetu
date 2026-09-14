@@ -1,8 +1,49 @@
-# GraphQL schema example
+# GraphQL schema
 #
 # https://gqlgen.com/getting-started/
 
 type Query {
   health: String!
+  events: [Event!]!
+  event(id: ID!): Event
 }
+
+type Mutation {
+  createEvent(input: CreateEventInput!): Event!
+  updateEvent(id: ID!, input: UpdateEventInput!): Event!
+  deleteEvent(id: ID!): Boolean!
+  onboardUser(input: OnboardingInput!): Boolean!
+}
+
+type Event {
+  id: ID!
+  name: String!
+  startDate: String! # "2006-01-02"
+  duration: String! # Postgres interval literal, e.g. "2 days"
+  hostId: ID
+  hostName: String
+  createdAt: String! # RFC3339
+}
+
+input CreateEventInput {
+  name: String!
+  startDate: String!
+  duration: String!
+}
+
+input UpdateEventInput {
+  name: String
+  startDate: String
+  duration: String
+}
+
+input OnboardingInput {
+  name: String!
+  role: String!
+  location: String!
+  labels: [String!]
+  bio: String
+  profilePicture: String
+}
+
 
