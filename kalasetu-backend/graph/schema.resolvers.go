@@ -7,8 +7,10 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"kalasetu/graph/model"
 	"kalasetu/models"
+	"strconv"
 )
 
 // CreateEvent is the resolver for the createEvent field.
@@ -101,6 +103,53 @@ func (r *mutationResolver) OnboardUser(ctx context.Context, input model.Onboardi
 	return true, nil
 }
 
+// SubmitApplication is the resolver for the submitApplication field.
+func (r *mutationResolver) SubmitApplication(ctx context.Context, input model.CreateApplicationInput) (*model.Application, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	opportunityID, err := strconv.Atoi(input.OpportunityID)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceInput := models.CreateApplicationInput{
+		OpportunityID: opportunityID,
+		ResumeURL:     input.ResumeURL,
+	}
+
+	application, err := r.applicationService.Create(
+		ctx,
+		userID,
+		serviceInput,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return toGraphApplication(application), nil
+}
+
+// UpdateApplicationStatus is the resolver for the updateApplicationStatus field.
+func (r *mutationResolver) UpdateApplicationStatus(ctx context.Context, id string, status string) (bool, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return false, err
+	}
+	appID, err := strconv.Atoi(id)
+	if err != nil {
+		return false, fmt.Errorf("invalid application id: %s", id)
+	}
+
+	if err := r.applicationService.UpdateStatus(ctx, userID, appID, status); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // Health is the resolver for the health field.
 func (r *queryResolver) Health(ctx context.Context) (string, error) {
 	return "OK", nil
@@ -127,6 +176,56 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, err
 		return nil, err
 	}
 	return toGraphEvent(event), nil
+}
+
+// Application is the resolver for the application field.
+func (r *queryResolver) Application(ctx context.Context, id string) (*model.Application, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	appID, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid application id: %s", id)
+	}
+
+	app, err := r.applicationService.FindByID(ctx, userID, appID)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphApplication(app), nil
+}
+
+// MyApplications is the resolver for the myApplications field.
+func (r *queryResolver) MyApplications(ctx context.Context) ([]*model.Application, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	apps, err := r.applicationService.ListByApplier(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphApplications(apps), nil
+}
+
+// ApplicationsByOpportunity is the resolver for the applicationsByOpportunity field.
+func (r *queryResolver) ApplicationsByOpportunity(ctx context.Context, opportunityID string) ([]*model.Application, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	oppID, err := strconv.Atoi(opportunityID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid opportunity id: %s", opportunityID)
+	}
+
+	apps, err := r.applicationService.ListByOpportunity(ctx, userID, oppID)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphApplications(apps), nil
 }
 
 // Mutation returns MutationResolver implementation.

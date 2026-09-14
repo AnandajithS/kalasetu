@@ -2,6 +2,20 @@
 
 package model
 
+type Application struct {
+	ID            string `json:"id"`
+	OpportunityID string `json:"opportunityId"`
+	ApplierID     string `json:"applierId"`
+	ResumeURL     string `json:"resumeUrl"`
+	Status        string `json:"status"`
+	CreatedAt     string `json:"createdAt"`
+}
+
+type CreateApplicationInput struct {
+	OpportunityID string `json:"opportunityId"`
+	ResumeURL     string `json:"resumeUrl"`
+}
+
 type CreateEventInput struct {
 	Name      string `json:"name"`
 	StartDate string `json:"startDate"`

@@ -8,13 +8,15 @@ package graph
 import "kalasetu/services"
 
 type Resolver struct {
-	eventService services.EventService
-	userService  services.UserService
+	eventService       services.EventService
+	userService        services.UserService
+	applicationService services.ApplicationService
 }
 
-func NewResolver(eventService services.EventService, userService services.UserService) *Resolver {
+func NewResolver(eventService services.EventService, userService services.UserService, applicationService services.ApplicationService) *Resolver {
 	return &Resolver{
-		eventService: eventService,
-		userService:  userService,
+		eventService:       eventService,
+		userService:        userService,
+		applicationService: applicationService,
 	}
 }
