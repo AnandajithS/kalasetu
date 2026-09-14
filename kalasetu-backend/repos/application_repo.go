@@ -9,6 +9,10 @@ import (
 type ApplicationRepository interface {
 	Create(ctx context.Context, app *models.Application) error
 	FindByID(ctx context.Context, id int) (*models.Application, error)
+	FindByOpportunityAndApplier(ctx context.Context, opportunityID, applierID int) (*models.Application, error)
+	ListByApplier(ctx context.Context, applierID int) ([]models.Application, error)
+	ListByOpportunity(ctx context.Context, opportunityID int) ([]models.Application, error)
+	GetOpportunityHostID(ctx context.Context, opportunityID int) (int, error)
 	UpdateStatus(ctx context.Context, id int, status string) error
 }
 
@@ -54,6 +58,88 @@ func (r *applicationRepository) FindByID(ctx context.Context, id int) (*models.A
 	return app, nil
 }
 
+func (r *applicationRepository) FindByOpportunityAndApplier(ctx context.Context, opportunityID, applierID int) (*models.Application, error) {
+	query := `
+		SELECT id, opportunity_id, applier_id, resume_url, status, created_at
+		FROM applications
+		WHERE opportunity_id = $1 AND applier_id = $2
+	`
+	app := &models.Application{}
+	err := r.db.QueryRowContext(ctx, query, opportunityID, applierID).Scan(
+		&app.ID, &app.OpportunityID, &app.ApplierID, &app.ResumeURL, &app.Status, &app.CreatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return app, nil
+}
+
+func (r *applicationRepository) ListByApplier(ctx context.Context, applierID int) ([]models.Application, error) {
+	query := `
+		SELECT id, opportunity_id, applier_id, resume_url, status, created_at
+		FROM applications
+		WHERE applier_id = $1
+		ORDER BY created_at DESC
+	`
+	rows, err := r.db.QueryContext(ctx, query, applierID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var apps []models.Application
+	for rows.Next() {
+		var app models.Application
+		if err := rows.Scan(&app.ID, &app.OpportunityID, &app.ApplierID, &app.ResumeURL, &app.Status, &app.CreatedAt); err != nil {
+			return nil, err
+		}
+		apps = append(apps, app)
+	}
+
+	return apps, rows.Err()
+}
+
+func (r *applicationRepository) ListByOpportunity(ctx context.Context, opportunityID int) ([]models.Application, error) {
+	query := `
+		SELECT id, opportunity_id, applier_id, resume_url, status, created_at
+		FROM applications
+		WHERE opportunity_id = $1
+		ORDER BY created_at DESC
+	`
+	rows, err := r.db.QueryContext(ctx, query, opportunityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var apps []models.Application
+	for rows.Next() {
+		var app models.Application
+		if err := rows.Scan(&app.ID, &app.OpportunityID, &app.ApplierID, &app.ResumeURL, &app.Status, &app.CreatedAt); err != nil {
+			return nil, err
+		}
+		apps = append(apps, app)
+	}
+
+	return apps, rows.Err()
+}
+
+func (r *applicationRepository) GetOpportunityHostID(ctx context.Context, opportunityID int) (int, error) {
+	query := `
+		SELECT host_id FROM opportunities WHERE id = $1
+	`
+	var hostID int
+	err := r.db.QueryRowContext(ctx, query, opportunityID).Scan(&hostID)
+	if err != nil {
+		return 0, err
+	}
+	return hostID, nil
+}
+
 func (r *applicationRepository) UpdateStatus(ctx context.Context, id int, status string) error {
 	query := `
 		UPDATE applications
@@ -76,5 +162,4 @@ func (r *applicationRepository) UpdateStatus(ctx context.Context, id int, status
 	}
 
 	return nil
-
 }

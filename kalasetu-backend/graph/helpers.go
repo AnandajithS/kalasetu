@@ -63,6 +63,9 @@ func toGraphEvents(events []models.Event) []*model.Event {
 }
 
 func toGraphApplication(app *models.Application) *model.Application {
+	if app == nil {
+		return nil
+	}
 	return &model.Application{
 		ID:            strconv.Itoa(app.ID),
 		OpportunityID: strconv.Itoa(app.OpportunityID),
@@ -71,4 +74,13 @@ func toGraphApplication(app *models.Application) *model.Application {
 		Status:        app.Status,
 		CreatedAt:     app.CreatedAt.Format(time.RFC3339),
 	}
+}
+
+func toGraphApplications(apps []models.Application) []*model.Application {
+	result := make([]*model.Application, 0, len(apps))
+	for i := range apps {
+		a := apps[i]
+		result = append(result, toGraphApplication(&a))
+	}
+	return result
 }

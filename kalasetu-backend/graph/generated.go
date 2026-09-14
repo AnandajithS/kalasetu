@@ -60,15 +60,17 @@ type ComplexityRoot struct {
 		DeleteEvent             func(childComplexity int, id string) int
 		OnboardUser             func(childComplexity int, input model.OnboardingInput) int
 		SubmitApplication       func(childComplexity int, input model.CreateApplicationInput) int
-		UpdateApplicationStatus func(childComplexity int, input string) int
+		UpdateApplicationStatus func(childComplexity int, id string, status string) int
 		UpdateEvent             func(childComplexity int, id string, input model.UpdateEventInput) int
 	}
 
 	Query struct {
-		Application func(childComplexity int, id string) int
-		Event       func(childComplexity int, id string) int
-		Events      func(childComplexity int) int
-		Health      func(childComplexity int) int
+		Application               func(childComplexity int, id string) int
+		ApplicationsByOpportunity func(childComplexity int, opportunityID string) int
+		Event                     func(childComplexity int, id string) int
+		Events                    func(childComplexity int) int
+		Health                    func(childComplexity int) int
+		MyApplications            func(childComplexity int) int
 	}
 }
 
@@ -78,13 +80,15 @@ type MutationResolver interface {
 	DeleteEvent(ctx context.Context, id string) (bool, error)
 	OnboardUser(ctx context.Context, input model.OnboardingInput) (bool, error)
 	SubmitApplication(ctx context.Context, input model.CreateApplicationInput) (*model.Application, error)
-	UpdateApplicationStatus(ctx context.Context, input string) (bool, error)
+	UpdateApplicationStatus(ctx context.Context, id string, status string) (bool, error)
 }
 type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
 	Events(ctx context.Context) ([]*model.Event, error)
 	Event(ctx context.Context, id string) (*model.Event, error)
 	Application(ctx context.Context, id string) (*model.Application, error)
+	MyApplications(ctx context.Context) ([]*model.Application, error)
+	ApplicationsByOpportunity(ctx context.Context, opportunityID string) ([]*model.Application, error)
 }
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -235,7 +239,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.UpdateApplicationStatus(childComplexity, args["input"].(string)), true
+		return e.ComplexityRoot.Mutation.UpdateApplicationStatus(childComplexity, args["id"].(string), args["status"].(string)), true
 	case "Mutation.updateEvent":
 		if e.ComplexityRoot.Mutation.UpdateEvent == nil {
 			break
@@ -259,6 +263,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Application(childComplexity, args["id"].(string)), true
+	case "Query.applicationsByOpportunity":
+		if e.ComplexityRoot.Query.ApplicationsByOpportunity == nil {
+			break
+		}
+
+		args, err := ec.field_Query_applicationsByOpportunity_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.ApplicationsByOpportunity(childComplexity, args["opportunityId"].(string)), true
 	case "Query.event":
 		if e.ComplexityRoot.Query.Event == nil {
 			break
@@ -282,6 +297,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Health(childComplexity), true
+
+	case "Query.myApplications":
+		if e.ComplexityRoot.Query.MyApplications == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.MyApplications(childComplexity), true
 
 	}
 	return 0, false
@@ -436,11 +458,16 @@ func (ec *executionContext) field_Mutation_submitApplication_args(ctx context.Co
 func (ec *executionContext) field_Mutation_updateApplicationStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNString2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
 	if err != nil {
 		return nil, err
 	}
-	args["input"] = arg0
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["status"] = arg1
 	return args, nil
 }
 
@@ -479,6 +506,17 @@ func (ec *executionContext) field_Query_application_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_applicationsByOpportunity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "opportunityId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["opportunityId"] = arg0
 	return args, nil
 }
 
@@ -1181,7 +1219,7 @@ func (ec *executionContext) _Mutation_updateApplicationStatus(ctx context.Contex
 		ec.fieldContext_Mutation_updateApplicationStatus,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().UpdateApplicationStatus(ctx, fc.Args["input"].(string))
+			return ec.Resolvers.Mutation().UpdateApplicationStatus(ctx, fc.Args["id"].(string), fc.Args["status"].(string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -1394,6 +1432,104 @@ func (ec *executionContext) fieldContext_Query_application(ctx context.Context, 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_application_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_myApplications(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_myApplications,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().MyApplications(ctx)
+		},
+		nil,
+		ec.marshalNApplication2ᚕᚖkalasetuᚋgraphᚋmodelᚐApplicationᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_myApplications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Application_id(ctx, field)
+			case "opportunityId":
+				return ec.fieldContext_Application_opportunityId(ctx, field)
+			case "applierId":
+				return ec.fieldContext_Application_applierId(ctx, field)
+			case "resumeUrl":
+				return ec.fieldContext_Application_resumeUrl(ctx, field)
+			case "status":
+				return ec.fieldContext_Application_status(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Application_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_applicationsByOpportunity(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_applicationsByOpportunity,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().ApplicationsByOpportunity(ctx, fc.Args["opportunityId"].(string))
+		},
+		nil,
+		ec.marshalNApplication2ᚕᚖkalasetuᚋgraphᚋmodelᚐApplicationᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_applicationsByOpportunity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Application_id(ctx, field)
+			case "opportunityId":
+				return ec.fieldContext_Application_opportunityId(ctx, field)
+			case "applierId":
+				return ec.fieldContext_Application_applierId(ctx, field)
+			case "resumeUrl":
+				return ec.fieldContext_Application_resumeUrl(ctx, field)
+			case "status":
+				return ec.fieldContext_Application_status(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Application_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_applicationsByOpportunity_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3464,6 +3600,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "myApplications":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_myApplications(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "applicationsByOpportunity":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_applicationsByOpportunity(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -3832,6 +4012,22 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 func (ec *executionContext) marshalNApplication2kalasetuᚋgraphᚋmodelᚐApplication(ctx context.Context, sel ast.SelectionSet, v model.Application) graphql.Marshaler {
 	return ec._Application(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNApplication2ᚕᚖkalasetuᚋgraphᚋmodelᚐApplicationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Application) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNApplication2ᚖkalasetuᚋgraphᚋmodelᚐApplication(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNApplication2ᚖkalasetuᚋgraphᚋmodelᚐApplication(ctx context.Context, sel ast.SelectionSet, v *model.Application) graphql.Marshaler {

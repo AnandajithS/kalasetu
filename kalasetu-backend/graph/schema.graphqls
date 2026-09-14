@@ -7,6 +7,8 @@ type Query {
   events: [Event!]!
   event(id: ID!): Event
   application(id: ID!): Application
+  myApplications: [Application!]!
+  applicationsByOpportunity(opportunityId: ID!): [Application!]!
 }
 
 type Mutation {
@@ -15,7 +17,7 @@ type Mutation {
   deleteEvent(id: ID!): Boolean!
   onboardUser(input: OnboardingInput!): Boolean!
   submitApplication(input: CreateApplicationInput!): Application!
-  updateApplicationStatus(input: String!): Boolean!
+  updateApplicationStatus(id: ID!, status: String!): Boolean!
 }
 
 type Event {
