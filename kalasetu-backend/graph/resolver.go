@@ -1,10 +1,5 @@
 package graph
 
-// This file will not be regenerated automatically.
-//
-// It serves as dependency injection for your app, add any dependencies you require
-// here.
-
 import "kalasetu/services"
 
 type Resolver struct {
@@ -14,6 +9,7 @@ type Resolver struct {
 	commentService     services.CommentService
 	likeService        services.LikeService
 	userService        services.UserService
+	profileService     services.ProfileService
 }
 
 func NewResolver(
@@ -23,6 +19,7 @@ func NewResolver(
 	commentService services.CommentService,
 	likeService services.LikeService,
 	userService services.UserService,
+	profileService services.ProfileService,
 ) *Resolver {
 	return &Resolver{
 		eventService:       eventService,
@@ -31,5 +28,6 @@ func NewResolver(
 		commentService:     commentService,
 		likeService:        likeService,
 		userService:        userService,
+		profileService:     profileService,
 	}
 }

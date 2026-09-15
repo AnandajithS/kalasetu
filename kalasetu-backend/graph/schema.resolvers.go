@@ -406,79 +406,34 @@ func (r *queryResolver) ApplicationsByOpportunity(ctx context.Context, opportuni
 	return toGraphApplications(apps), nil
 }
 
+// Profile is the resolver for the profile field.
+func (r *queryResolver) Profile(ctx context.Context, userID string) (*model.Profile, error) {
+	panic(fmt.Errorf("not implemented: Profile - profile"))
+}
+
 // Posts is the resolver for the posts field.
 func (r *queryResolver) Posts(ctx context.Context, limit *int32, offset *int32) ([]*model.Post, error) {
-	currUserID := optionalUserID(ctx)
-	posts, err := r.postService.List(ctx, currUserID, int32PtrToIntPtr(limit), int32PtrToIntPtr(offset))
-	if err != nil {
-		return nil, err
-	}
-	return toGraphPosts(posts), nil
+	panic(fmt.Errorf("not implemented: Posts - posts"))
 }
 
 // PostsByUser is the resolver for the postsByUser field.
 func (r *queryResolver) PostsByUser(ctx context.Context, userID string, limit *int32, offset *int32) ([]*model.Post, error) {
-	targetUserID, err := strconv.Atoi(userID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user id: %s", userID)
-	}
-	currUserID := optionalUserID(ctx)
-	posts, err := r.postService.ListByUser(ctx, targetUserID, currUserID, int32PtrToIntPtr(limit), int32PtrToIntPtr(offset))
-	if err != nil {
-		return nil, err
-	}
-	return toGraphPosts(posts), nil
+	panic(fmt.Errorf("not implemented: PostsByUser - postsByUser"))
 }
 
 // Post is the resolver for the post field.
 func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error) {
-	postID, err := parsePostID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	currUserID := optionalUserID(ctx)
-	post, err := r.postService.GetByID(ctx, postID, currUserID)
-	if err != nil {
-		return nil, err
-	}
-	return toGraphPost(post), nil
+	panic(fmt.Errorf("not implemented: Post - post"))
 }
 
 // LikesOfPost is the resolver for the likesOfPost field.
 func (r *queryResolver) LikesOfPost(ctx context.Context, id string) ([]*model.Author, error) {
-	postID, err := parsePostID(id)
-	if err != nil {
-		return nil, err
-	}
-	currUserID := optionalUserID(ctx)
-	if _, err := r.postService.GetByID(ctx, postID, currUserID); err != nil {
-		return nil, err
-	}
-
-	authors, err := r.likeService.ListByPost(ctx, postID)
-	if err != nil {
-		return nil, err
-	}
-	return toGraphAuthors(authors), nil
+	panic(fmt.Errorf("not implemented: LikesOfPost - likesOfPost"))
 }
 
 // CommentsOfPost is the resolver for the commentsOfPost field.
 func (r *queryResolver) CommentsOfPost(ctx context.Context, id string) ([]*model.Comment, error) {
-	postID, err := parsePostID(id)
-	if err != nil {
-		return nil, err
-	}
-	currUserID := optionalUserID(ctx)
-	if _, err := r.postService.GetByID(ctx, postID, currUserID); err != nil {
-		return nil, err
-	}
-
-	comments, err := r.commentService.ListByPost(ctx, postID)
-	if err != nil {
-		return nil, err
-	}
-	return toGraphComments(comments), nil
+	panic(fmt.Errorf("not implemented: CommentsOfPost - commentsOfPost"))
 }
 
 // Mutation returns MutationResolver implementation.

@@ -47,6 +47,14 @@ func parseCommentID(id string) (int, error) {
 	return parsed, nil
 }
 
+func parseProfileID(id string) (int, error) {
+	parsed, err := strconv.Atoi(id)
+	if err != nil {
+		return 0, fmt.Errorf("invalid profile id: %s", id)
+	}
+	return parsed, nil
+}
+
 func parseOptionalID(id *string) (*int, error) {
 	if id == nil {
 		return nil, nil
@@ -246,4 +254,50 @@ func toGraphComments(comments []models.Comment) []*model.Comment {
 		result = append(result, toGraphComment(&c))
 	}
 	return result
+}
+
+func toGraphProfilePosts(posts []models.ProfilePost) []*model.ProfilePost {
+	result := make([]*model.ProfilePost, 0, len(posts))
+	for i := range posts {
+		p := posts[i]
+		post := &model.ProfilePost{
+			ID:           strconv.Itoa(p.ID),
+			Content:      p.Content,
+			LikeCount:    int32(p.LikeCount),
+			CommentCount: int32(p.CommentCount),
+			CreatedAt:    p.CreatedAt.Format(time.RFC3339),
+		}
+		if p.MediaType != "" {
+			post.MediaType = &p.MediaType
+		}
+		if p.MediaURI != "" {
+			post.MediaURI = &p.MediaURI
+		}
+		result = append(result, post)
+	}
+	return result
+}
+
+func toGraphProfile(p *models.Profile) *model.Profile {
+	var avatarURL *string
+	if p.ProfilePicture != "" {
+		avatarURL = &p.ProfilePicture
+	}
+	return &model.Profile{
+		ID:             strconv.Itoa(p.ID),
+		Name:           p.Name,
+		Username:       p.UserName,
+		Location:       p.Location,
+		Bio:            p.Bio,
+		AvatarURL:      avatarURL,
+		Email:          p.Email,
+		Followers:      int32(p.Followers),
+		Following:      int32(p.Following),
+		ArtworksCount:  int32(p.ArtworksCount),
+		TotalLikes:     int32(p.TotalLikes),
+		Skills:         p.Skills,
+		ArtworksImages: p.ArtworksImages,
+		Achievements:   []*model.Achievement{},
+		RecentPosts:    toGraphProfilePosts(p.RecentPosts),
+	}
 }
