@@ -11,6 +11,7 @@ type Query {
   health: String!
   events: [Event!]!
   event(id: ID!): Event
+  userEvents: [Event!]!
   application(id: ID!): Application
   myApplications: [Application!]!
   applicationsByOpportunity(opportunityId: ID!): [Application!]!

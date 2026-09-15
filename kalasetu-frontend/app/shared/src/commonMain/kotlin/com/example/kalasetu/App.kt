@@ -9,7 +9,13 @@ import com.example.kalasetu.features.onboarding.*
 import com.example.kalasetu.features.profile.*
 import com.example.kalasetu.navigation.Screen
 import com.example.kalasetu.theme.KalasetuTheme
-import kotlin.random.Random
+import kotlinx.datetime.LocalDate
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kalasetu.repository.EventRepository
+import kotlinx.coroutines.launch
+import com.example.kalasetu.repository.AuthRepository
+import com.example.kalasetu.repository.OnboardingRepository
+import com.example.kalasetu.features.onboarding.OnboardingData
 
 @Composable
 fun App() {
@@ -20,18 +26,58 @@ fun App() {
     var currentProfile by remember { mutableStateOf<Profile?>(null) }
     var draftEvent by remember { mutableStateOf(EventDraft()) }
     val sharedEventListViewModel: EventListViewModel = viewModel()
+    val eventRepository = remember { EventRepository() }
+    val scope = rememberCoroutineScope()
+    var onboardingData by remember { mutableStateOf(OnboardingData()) }
+    val onboardingRepository = remember { OnboardingRepository() }
+
 
     KalasetuTheme {
         when (val currentScreen = screen) {
 
-            // ─── Onboarding & Auth ───
+
             Screen.OnboardingWelcome -> OnboardingWelcomeScreen {
                 screen = Screen.AuthSignup
             }
             Screen.AuthSignup -> AuthSignupScreen(
-                onSignUp = { screen = Screen.AuthOtp },
-                onLogin = { screen = Screen.AuthLogin },
-                onBack = { screen = Screen.OnboardingWelcome },
+                onSignUp = { name, email, password ->
+                    scope.launch {
+
+                        val registerResult = AuthRepository().register(
+                            name = name,
+                            email = email,
+                            password = password
+                        )
+
+                        if (registerResult.isSuccess) {
+
+                            val loginResult = AuthRepository().login(
+                                email = email,
+                                password = password
+                            )
+
+                            if (loginResult.isSuccess) {
+
+                                onboardingData = OnboardingData(
+                                    name = name
+                                )
+
+                                screen = Screen.OnboardingBasicInfo
+
+                            } else {
+                                screen = Screen.AuthLogin
+                            }
+                        }
+                    }
+                },
+
+                onLogin = {
+                    screen = Screen.AuthLogin
+                },
+
+                onBack = {
+                    screen = Screen.AuthLogin
+                },
             )
             Screen.AuthOtp -> AuthOtpScreen(
                 onVerify = { screen = Screen.OnboardingBasicInfo },
@@ -39,7 +85,31 @@ fun App() {
                 onBack = { screen = Screen.AuthSignup },
             )
             Screen.AuthLogin -> AuthLoginScreen(
-                onLogin = { screen = Screen.OnboardingBasicInfo },
+                onLogin = { email, password ->
+                    scope.launch {
+
+                        val result = AuthRepository().login(
+                            email = email,
+                            password = password
+                        )
+
+                        if (result.isSuccess) {
+
+                            println("========== APP LOGIN SUCCESS ==========")
+
+                            screen = Screen.OrganizerHome(userId = "123")
+
+                        } else {
+
+                            println(
+                                "LOGIN FAILED: ${
+                                    result.exceptionOrNull()?.message
+                                }"
+                            )
+                        }
+                    }
+                },
+
                 onSignUp = { screen = Screen.AuthSignup },
                 onBack = { screen = Screen.AuthSignup },
             )
@@ -47,30 +117,65 @@ fun App() {
                 onNext = { name, role ->
                     userName = name
                     selectedRole = role
+                    onboardingData = onboardingData.copy(
+                        name = name,
+                        role = role
+                    )
                     screen = Screen.OnboardingLocation
                 },
-            ) { screen = Screen.OnboardingWelcome }
+                onBack = { screen = Screen.OnboardingWelcome }
+            )
             Screen.OnboardingLocation -> OnboardingLocationScreen(
                 onNext = { location ->
                     userLocation = location
+                    onboardingData = onboardingData.copy(
+                        location = location
+                    )
                     screen = when (selectedRole) {
                         "Artist" -> Screen.ArtistExperience
                         "Event Organizer" -> Screen.OrganizerType
                         else -> Screen.AudienceInterests
                     }
                 },
-            ) { screen = Screen.OnboardingBasicInfo }
-            Screen.ArtistExperience -> ExperienceScreen(onNext = { screen = Screen.OnboardingDone }) { screen = Screen.OnboardingLocation }
-            Screen.OrganizerType -> OrganizerTypeScreen(onNext = { screen = Screen.OnboardingDone }) { screen = Screen.OnboardingLocation }
+                onBack = { screen = Screen.OnboardingBasicInfo }
+            )
+            Screen.ArtistExperience -> ExperienceScreen(
+                onNext = { experience ->
+                    onboardingData = onboardingData.copy(bio = experience)
+                    screen = Screen.OnboardingDone
+                },
+                onBack = { screen = Screen.OnboardingLocation }
+            )
+            Screen.OrganizerType -> OrganizerTypeScreen( onNext = {screen = Screen.OrganizerIntent}, onBack = { screen = Screen.OnboardingLocation })
             Screen.OrganizerIntent -> OrganizerIntentScreen(onNext = { screen = Screen.OnboardingDone }) { screen = Screen.OrganizerType }
             Screen.AudienceInterests -> InterestsScreen(onNext = { screen = Screen.OnboardingDone }) { screen = Screen.OnboardingLocation }
 
-            Screen.OnboardingDone -> OnboardingDoneScreen {
-                screen = when (selectedRole) {
-                    "Artist" -> Screen.ArtistHome(userId = "123")
-                    "Event Organizer" -> Screen.OrganizerHome(userId = "123")
-                    else -> Screen.Profile(userId = "123")
-                }
+            Screen.OnboardingDone -> {
+                OnboardingDoneScreen(
+                    onFinish = {
+                        scope.launch {
+                            val response = onboardingRepository.onboardUser(
+                                name = onboardingData.name,
+                                role = onboardingData.role,
+                                location = onboardingData.location,
+                                labels = onboardingData.labels,
+                                bio = onboardingData.bio,
+                                profilePicture = onboardingData.profilePicture
+                            )
+
+                            if (
+                                response.errors.isNullOrEmpty() &&
+                                response.data?.onboardUser == true
+                            ) {
+                                screen = Screen.ArtistHome(
+                                    userId = AuthStore.userId?.toString() ?: ""
+                                )
+                            } else {
+                                println("ONBOARDING FAILED: ${response.errors}")
+                            }
+                        }
+                    }
+                )
             }
 
             // ─── Profile ───
@@ -210,10 +315,48 @@ fun App() {
                 onBack = { screen = Screen.TimelineAndLocation },
                 onEdit = { screen = Screen.CreateEvent },
                 onPublish = {
-                    val newId = "event_${Random.nextLong()}"
-                    sharedEventListViewModel.addEvent(draftEvent.toEvent(newId))
-                    draftEvent = EventDraft()
-                    screen = Screen.OrganizerHome(userId = "123")
+                    println("========== PUBLISH CLICKED ==========")
+                    val startDate = draftEvent.startDate
+
+                    val duration = if (draftEvent.startDate != null && draftEvent.endDate != null) {
+                        val startDate = draftEvent.startDate!!
+                        val endDate = draftEvent.endDate!!
+
+                        val days = endDate.toEpochDays() - startDate.toEpochDays() + 1
+                        "$days days"
+                    } else {
+                        "1 day"
+                    }
+
+                    scope.launch {
+
+                        try {
+                            println("========== CALLING GRAPHQL ==========")
+                            val response = eventRepository.createEvent(
+                                name = draftEvent.title.trim(),
+                                startDate = startDate?.toString() ?: "",
+                                duration = duration
+                            )
+
+                            if (response.data != null && response.exception == null && response.errors.isNullOrEmpty()) {
+                                println("========== EVENT CREATED SUCCESSFULLY ==========")
+
+                                draftEvent = EventDraft()
+                                screen = Screen.OrganizerHome(userId = "123")
+                            } else {
+                                println("========== EVENT CREATION FAILED ==========")
+                                println("data = ${response.data}")
+                                println("errors = ${response.errors}")
+                                println("exception = ${response.exception}")
+                            }
+
+                        } catch (e: Exception) {
+
+                            println("NETWORK ERROR: ${e.message}")
+                            e.printStackTrace()
+
+                        }
+                    }
                 },
             )
 

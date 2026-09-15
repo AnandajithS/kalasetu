@@ -27,7 +27,9 @@ fun ArtistHomeScreen(
     onSwitchRole: () -> Unit = {}
 ) {
     val events by viewModel.events.collectAsStateWithLifecycle()
-
+    LaunchedEffect(Unit) {
+        viewModel.loadEvents(isOrganizer = false)
+    }
     Scaffold(
         topBar = {
             TopAppBar(
