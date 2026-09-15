@@ -83,6 +83,7 @@ type Post struct {
 	CategoryName *string      `json:"categoryName,omitempty"`
 	LikeCount    int32        `json:"likeCount"`
 	CommentCount int32        `json:"commentCount"`
+	IsLikedByMe  bool         `json:"isLikedByMe"`
 	CreatedAt    string       `json:"createdAt"`
 }
 

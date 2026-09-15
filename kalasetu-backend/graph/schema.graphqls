@@ -66,6 +66,7 @@ type Post {
   categoryName: String
   likeCount: Int!
   commentCount: Int!
+  isLikedByMe: Boolean!
   createdAt: String!
 }
 
@@ -124,7 +125,8 @@ extend type Mutation {
 }
 
 extend type Query {
-  posts: [Post!]!
+  posts(limit: Int, offset: Int): [Post!]!
+  postsByUser(userId: ID!, limit: Int, offset: Int): [Post!]!
   post(id: ID!): Post
   likesOfPost(id: ID!): [Author!]!
   commentsOfPost(id: ID!): [Comment!]!

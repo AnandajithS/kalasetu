@@ -12,6 +12,7 @@ type Post struct {
 	CategoryName string      `json:"category_name"`
 	LikeCount    int         `json:"like_count"`
 	CommentCount int         `json:"comment_count"`
+	IsLikedByMe  bool        `json:"is_liked_by_me"`
 	CreatedAt    time.Time   `json:"created_at"`
 }
 

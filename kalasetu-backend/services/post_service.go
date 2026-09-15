@@ -26,8 +26,9 @@ const maxMediaPerPost = 10
 
 type PostService interface {
 	Create(ctx context.Context, userID int, input models.CreatePostInput) (*models.Post, error)
-	GetByID(ctx context.Context, id int) (*models.Post, error)
-	List(ctx context.Context) ([]models.Post, error)
+	GetByID(ctx context.Context, id int, currentUserID int) (*models.Post, error)
+	List(ctx context.Context, currentUserID int, limit, offset *int) ([]models.Post, error)
+	ListByUser(ctx context.Context, authorUserID int, currentUserID int, limit, offset *int) ([]models.Post, error)
 	Update(ctx context.Context, userID, id int, input models.UpdatePostInput) (*models.Post, error)
 	Delete(ctx context.Context, userID, id int) error
 }
@@ -71,7 +72,7 @@ func (s *postService) Create(ctx context.Context, userID int, input models.Creat
 		return nil, err
 	}
 
-	return s.getPost(ctx, post.ID)
+	return s.getPost(ctx, post.ID, userID)
 }
 
 // attachMedia uploads each file to object storage and records its object key
@@ -160,8 +161,8 @@ func (s *postService) hydrateMedia(ctx context.Context, post *models.Post) error
 }
 
 // getPost fetches a post by id and hydrates its media with public URLs.
-func (s *postService) getPost(ctx context.Context, id int) (*models.Post, error) {
-	post, err := s.postRepo.FindByID(ctx, id)
+func (s *postService) getPost(ctx context.Context, id int, currentUserID int) (*models.Post, error) {
+	post, err := s.postRepo.FindByID(ctx, id, currentUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -174,12 +175,57 @@ func (s *postService) getPost(ctx context.Context, id int) (*models.Post, error)
 	return post, nil
 }
 
-func (s *postService) GetByID(ctx context.Context, id int) (*models.Post, error) {
-	return s.getPost(ctx, id)
+func (s *postService) GetByID(ctx context.Context, id int, currentUserID int) (*models.Post, error) {
+	return s.getPost(ctx, id, currentUserID)
 }
 
-func (s *postService) List(ctx context.Context) ([]models.Post, error) {
-	posts, err := s.postRepo.List(ctx)
+func derefInt(i *int) int {
+	if i == nil {
+		return 0
+	}
+	return *i
+}
+
+func (s *postService) List(ctx context.Context, currentUserID int, limit, offset *int) ([]models.Post, error) {
+	posts, err := s.postRepo.List(ctx, currentUserID, derefInt(limit), derefInt(offset))
+	if err != nil {
+		return nil, err
+	}
+	if len(posts) == 0 {
+		return posts, nil
+	}
+
+	ids := make([]int, 0, len(posts))
+	for i := range posts {
+		ids = append(ids, posts[i].ID)
+	}
+
+	mediaByPost, err := s.postMediaRepo.ListByPosts(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range posts {
+		media, ok := mediaByPost[posts[i].ID]
+		if !ok {
+			posts[i].Media = []models.PostMedia{}
+			continue
+		}
+		if s.storage != nil {
+			for j := range media {
+				media[j].URL, err = s.storage.GetURL(ctx, media[j].ObjectKey)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+		posts[i].Media = media
+	}
+	return posts, nil
+}
+
+func (s *postService) ListByUser(ctx context.Context, authorUserID int, currentUserID int, limit, offset *int) ([]models.Post, error) {
+	posts, err := s.postRepo.ListByUser(ctx, authorUserID, currentUserID, derefInt(limit), derefInt(offset))
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +263,7 @@ func (s *postService) List(ctx context.Context) ([]models.Post, error) {
 }
 
 func (s *postService) Update(ctx context.Context, userID, id int, input models.UpdatePostInput) (*models.Post, error) {
-	post, err := s.postRepo.FindByID(ctx, id)
+	post, err := s.postRepo.FindByID(ctx, id, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -230,11 +276,11 @@ func (s *postService) Update(ctx context.Context, userID, id int, input models.U
 	if err := s.postRepo.Update(ctx, id, input); err != nil {
 		return nil, err
 	}
-	return s.getPost(ctx, id)
+	return s.getPost(ctx, id, userID)
 }
 
 func (s *postService) Delete(ctx context.Context, userID, id int) error {
-	post, err := s.postRepo.FindByID(ctx, id)
+	post, err := s.postRepo.FindByID(ctx, id, userID)
 	if err != nil {
 		return err
 	}

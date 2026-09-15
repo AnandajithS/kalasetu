@@ -93,6 +93,7 @@ type ComplexityRoot struct {
 		Content      func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
 		ID           func(childComplexity int) int
+		IsLikedByMe  func(childComplexity int) int
 		LikeCount    func(childComplexity int) int
 		Media        func(childComplexity int) int
 		UserID       func(childComplexity int) int
@@ -118,7 +119,8 @@ type ComplexityRoot struct {
 		LikesOfPost               func(childComplexity int, id string) int
 		MyApplications            func(childComplexity int) int
 		Post                      func(childComplexity int, id string) int
-		Posts                     func(childComplexity int) int
+		Posts                     func(childComplexity int, limit *int32, offset *int32) int
+		PostsByUser               func(childComplexity int, userID string, limit *int32, offset *int32) int
 	}
 }
 
@@ -145,7 +147,8 @@ type QueryResolver interface {
 	Application(ctx context.Context, id string) (*model.Application, error)
 	MyApplications(ctx context.Context) ([]*model.Application, error)
 	ApplicationsByOpportunity(ctx context.Context, opportunityID string) ([]*model.Application, error)
-	Posts(ctx context.Context) ([]*model.Post, error)
+	Posts(ctx context.Context, limit *int32, offset *int32) ([]*model.Post, error)
+	PostsByUser(ctx context.Context, userID string, limit *int32, offset *int32) ([]*model.Post, error)
 	Post(ctx context.Context, id string) (*model.Post, error)
 	LikesOfPost(ctx context.Context, id string) ([]*model.Author, error)
 	CommentsOfPost(ctx context.Context, id string) ([]*model.Comment, error)
@@ -486,6 +489,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Post.ID(childComplexity), true
+	case "Post.isLikedByMe":
+		if e.ComplexityRoot.Post.IsLikedByMe == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Post.IsLikedByMe(childComplexity), true
 	case "Post.likeCount":
 		if e.ComplexityRoot.Post.LikeCount == nil {
 			break
@@ -638,7 +647,23 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			break
 		}
 
-		return e.ComplexityRoot.Query.Posts(childComplexity), true
+		args, err := ec.field_Query_posts_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Posts(childComplexity, args["limit"].(*int32), args["offset"].(*int32)), true
+	case "Query.postsByUser":
+		if e.ComplexityRoot.Query.PostsByUser == nil {
+			break
+		}
+
+		args, err := ec.field_Query_postsByUser_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.PostsByUser(childComplexity, args["userId"].(string), args["limit"].(*int32), args["offset"].(*int32)), true
 
 	}
 	return 0, false
@@ -998,6 +1023,43 @@ func (ec *executionContext) field_Query_post_args(ctx context.Context, rawArgs m
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_postsByUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "limit", ec.unmarshalOInt2ᚖint32)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "offset", ec.unmarshalOInt2ᚖint32)
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_posts_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "limit", ec.unmarshalOInt2ᚖint32)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "offset", ec.unmarshalOInt2ᚖint32)
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg1
 	return args, nil
 }
 
@@ -1997,6 +2059,8 @@ func (ec *executionContext) fieldContext_Mutation_createPost(ctx context.Context
 				return ec.fieldContext_Post_likeCount(ctx, field)
 			case "commentCount":
 				return ec.fieldContext_Post_commentCount(ctx, field)
+			case "isLikedByMe":
+				return ec.fieldContext_Post_isLikedByMe(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			}
@@ -2060,6 +2124,8 @@ func (ec *executionContext) fieldContext_Mutation_updatePost(ctx context.Context
 				return ec.fieldContext_Post_likeCount(ctx, field)
 			case "commentCount":
 				return ec.fieldContext_Post_commentCount(ctx, field)
+			case "isLikedByMe":
+				return ec.fieldContext_Post_isLikedByMe(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			}
@@ -2629,6 +2695,35 @@ func (ec *executionContext) fieldContext_Post_commentCount(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Post_isLikedByMe(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Post_isLikedByMe,
+		func(ctx context.Context) (any, error) {
+			return obj.IsLikedByMe, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Post_isLikedByMe(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3123,7 +3218,8 @@ func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.Coll
 		field,
 		ec.fieldContext_Query_posts,
 		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.Query().Posts(ctx)
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().Posts(ctx, fc.Args["limit"].(*int32), fc.Args["offset"].(*int32))
 		},
 		nil,
 		ec.marshalNPost2ᚕᚖkalasetuᚋgraphᚋmodelᚐPostᚄ,
@@ -3132,7 +3228,7 @@ func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.Coll
 	)
 }
 
-func (ec *executionContext) fieldContext_Query_posts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_posts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -3158,11 +3254,89 @@ func (ec *executionContext) fieldContext_Query_posts(_ context.Context, field gr
 				return ec.fieldContext_Post_likeCount(ctx, field)
 			case "commentCount":
 				return ec.fieldContext_Post_commentCount(ctx, field)
+			case "isLikedByMe":
+				return ec.fieldContext_Post_isLikedByMe(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_posts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_postsByUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_postsByUser,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().PostsByUser(ctx, fc.Args["userId"].(string), fc.Args["limit"].(*int32), fc.Args["offset"].(*int32))
+		},
+		nil,
+		ec.marshalNPost2ᚕᚖkalasetuᚋgraphᚋmodelᚐPostᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_postsByUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Post_id(ctx, field)
+			case "userId":
+				return ec.fieldContext_Post_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Post_userName(ctx, field)
+			case "content":
+				return ec.fieldContext_Post_content(ctx, field)
+			case "media":
+				return ec.fieldContext_Post_media(ctx, field)
+			case "categoryId":
+				return ec.fieldContext_Post_categoryId(ctx, field)
+			case "categoryName":
+				return ec.fieldContext_Post_categoryName(ctx, field)
+			case "likeCount":
+				return ec.fieldContext_Post_likeCount(ctx, field)
+			case "commentCount":
+				return ec.fieldContext_Post_commentCount(ctx, field)
+			case "isLikedByMe":
+				return ec.fieldContext_Post_isLikedByMe(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Post_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_postsByUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -3210,6 +3384,8 @@ func (ec *executionContext) fieldContext_Query_post(ctx context.Context, field g
 				return ec.fieldContext_Post_likeCount(ctx, field)
 			case "commentCount":
 				return ec.fieldContext_Post_commentCount(ctx, field)
+			case "isLikedByMe":
+				return ec.fieldContext_Post_isLikedByMe(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			}
@@ -5657,6 +5833,11 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "isLikedByMe":
+			out.Values[i] = ec._Post_isLikedByMe(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createdAt":
 			out.Values[i] = ec._Post_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5904,6 +6085,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_posts(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "postsByUser":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_postsByUser(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -6843,6 +7046,24 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 	_ = sel
 	_ = ctx
 	res := graphql.MarshalID(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint32(ctx context.Context, v any) (*int32, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt32(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint32(ctx context.Context, sel ast.SelectionSet, v *int32) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalInt32(*v)
 	return res
 }
 

@@ -58,6 +58,14 @@ func parseOptionalID(id *string) (*int, error) {
 	return &parsed, nil
 }
 
+func int32PtrToIntPtr(i *int32) *int {
+	if i == nil {
+		return nil
+	}
+	v := int(*i)
+	return &v
+}
+
 func toGraphEvent(e *models.Event) *model.Event {
 	if e == nil {
 		return nil
@@ -114,6 +122,15 @@ func toGraphApplications(apps []models.Application) []*model.Application {
 	return result
 }
 
+// optionalUserID returns the authenticated user id from context, or 0 if not authenticated.
+func optionalUserID(ctx context.Context) int {
+	userID, err := middlewares.GetUserIDFromContext(ctx)
+	if err != nil {
+		return 0
+	}
+	return userID
+}
+
 func toGraphPost(p *models.Post) *model.Post {
 	if p == nil {
 		return nil
@@ -141,6 +158,7 @@ func toGraphPost(p *models.Post) *model.Post {
 		CategoryName: categoryName,
 		LikeCount:    int32(p.LikeCount),
 		CommentCount: int32(p.CommentCount),
+		IsLikedByMe:  p.IsLikedByMe,
 		CreatedAt:    p.CreatedAt.Format(time.RFC3339),
 	}
 }

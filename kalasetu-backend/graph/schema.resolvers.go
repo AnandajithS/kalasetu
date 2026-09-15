@@ -225,7 +225,7 @@ func (r *mutationResolver) LikePost(ctx context.Context, id string) (bool, error
 	if err != nil {
 		return false, err
 	}
-	if _, err := r.postService.GetByID(ctx, postID); err != nil {
+	if _, err := r.postService.GetByID(ctx, postID, userID); err != nil {
 		return false, err
 	}
 	if err := r.likeService.Like(ctx, userID, postID); err != nil {
@@ -244,6 +244,9 @@ func (r *mutationResolver) UnLikePost(ctx context.Context, id string) (bool, err
 	if err != nil {
 		return false, err
 	}
+	if _, err := r.postService.GetByID(ctx, postID, userID); err != nil {
+		return false, err
+	}
 	if err := r.likeService.Unlike(ctx, userID, postID); err != nil {
 		return false, err
 	}
@@ -260,7 +263,7 @@ func (r *mutationResolver) AddComment(ctx context.Context, input model.CreateCom
 	if err != nil {
 		return nil, err
 	}
-	if _, err := r.postService.GetByID(ctx, postID); err != nil {
+	if _, err := r.postService.GetByID(ctx, postID, userID); err != nil {
 		return nil, err
 	}
 
@@ -388,8 +391,23 @@ func (r *queryResolver) ApplicationsByOpportunity(ctx context.Context, opportuni
 }
 
 // Posts is the resolver for the posts field.
-func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
-	posts, err := r.postService.List(ctx)
+func (r *queryResolver) Posts(ctx context.Context, limit *int32, offset *int32) ([]*model.Post, error) {
+	currUserID := optionalUserID(ctx)
+	posts, err := r.postService.List(ctx, currUserID, int32PtrToIntPtr(limit), int32PtrToIntPtr(offset))
+	if err != nil {
+		return nil, err
+	}
+	return toGraphPosts(posts), nil
+}
+
+// PostsByUser is the resolver for the postsByUser field.
+func (r *queryResolver) PostsByUser(ctx context.Context, userID string, limit *int32, offset *int32) ([]*model.Post, error) {
+	targetUserID, err := strconv.Atoi(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user id: %s", userID)
+	}
+	currUserID := optionalUserID(ctx)
+	posts, err := r.postService.ListByUser(ctx, targetUserID, currUserID, int32PtrToIntPtr(limit), int32PtrToIntPtr(offset))
 	if err != nil {
 		return nil, err
 	}
@@ -403,7 +421,8 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error
 		return nil, err
 	}
 
-	post, err := r.postService.GetByID(ctx, postID)
+	currUserID := optionalUserID(ctx)
+	post, err := r.postService.GetByID(ctx, postID, currUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -416,7 +435,8 @@ func (r *queryResolver) LikesOfPost(ctx context.Context, id string) ([]*model.Au
 	if err != nil {
 		return nil, err
 	}
-	if _, err := r.postService.GetByID(ctx, postID); err != nil {
+	currUserID := optionalUserID(ctx)
+	if _, err := r.postService.GetByID(ctx, postID, currUserID); err != nil {
 		return nil, err
 	}
 
@@ -433,7 +453,8 @@ func (r *queryResolver) CommentsOfPost(ctx context.Context, id string) ([]*model
 	if err != nil {
 		return nil, err
 	}
-	if _, err := r.postService.GetByID(ctx, postID); err != nil {
+	currUserID := optionalUserID(ctx)
+	if _, err := r.postService.GetByID(ctx, postID, currUserID); err != nil {
 		return nil, err
 	}
 
