@@ -9,14 +9,27 @@ import "kalasetu/services"
 
 type Resolver struct {
 	eventService       services.EventService
-	userService        services.UserService
 	applicationService services.ApplicationService
+	postService        services.PostService
+	commentService     services.CommentService
+	likeService        services.LikeService
+	userService        services.UserService
 }
 
-func NewResolver(eventService services.EventService, userService services.UserService, applicationService services.ApplicationService) *Resolver {
+func NewResolver(
+	eventService services.EventService,
+	applicationService services.ApplicationService,
+	postService services.PostService,
+	commentService services.CommentService,
+	likeService services.LikeService,
+	userService services.UserService,
+) *Resolver {
 	return &Resolver{
 		eventService:       eventService,
-		userService:        userService,
 		applicationService: applicationService,
+		postService:        postService,
+		commentService:     commentService,
+		likeService:        likeService,
+		userService:        userService,
 	}
 }

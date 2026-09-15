@@ -151,6 +151,168 @@ func (r *mutationResolver) UpdateApplicationStatus(ctx context.Context, id strin
 	return true, nil
 }
 
+// CreatePost is the resolver for the createPost field.
+func (r *mutationResolver) CreatePost(ctx context.Context, input model.CreatePostInput) (*model.Post, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	categoryID, err := parseOptionalID(input.CategoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	post, err := r.postService.Create(ctx, userID, models.CreatePostInput{
+		Content:    input.Content,
+		Media:      toUploadMediaList(input.Media),
+		CategoryID: categoryID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return toGraphPost(post), nil
+}
+
+// UpdatePost is the resolver for the updatePost field.
+func (r *mutationResolver) UpdatePost(ctx context.Context, id string, input model.UpdatePostInput) (*model.Post, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	postID, err := parsePostID(id)
+	if err != nil {
+		return nil, err
+	}
+	categoryID, err := parseOptionalID(input.CategoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	post, err := r.postService.Update(ctx, userID, postID, models.UpdatePostInput{
+		Content:    input.Content,
+		CategoryID: categoryID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return toGraphPost(post), nil
+}
+
+// DeletePost is the resolver for the deletePost field.
+func (r *mutationResolver) DeletePost(ctx context.Context, id string) (bool, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return false, err
+	}
+	postID, err := parsePostID(id)
+	if err != nil {
+		return false, err
+	}
+
+	if err := r.postService.Delete(ctx, userID, postID); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// LikePost is the resolver for the likePost field.
+func (r *mutationResolver) LikePost(ctx context.Context, id string) (bool, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return false, err
+	}
+	postID, err := parsePostID(id)
+	if err != nil {
+		return false, err
+	}
+	if _, err := r.postService.GetByID(ctx, postID, userID); err != nil {
+		return false, err
+	}
+	if err := r.likeService.Like(ctx, userID, postID); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// UnLikePost is the resolver for the unLikePost field.
+func (r *mutationResolver) UnLikePost(ctx context.Context, id string) (bool, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return false, err
+	}
+	postID, err := parsePostID(id)
+	if err != nil {
+		return false, err
+	}
+	if _, err := r.postService.GetByID(ctx, postID, userID); err != nil {
+		return false, err
+	}
+	if err := r.likeService.Unlike(ctx, userID, postID); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// AddComment is the resolver for the addComment field.
+func (r *mutationResolver) AddComment(ctx context.Context, input model.CreateCommentInput) (*model.Comment, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	postID, err := parsePostID(input.PostID)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := r.postService.GetByID(ctx, postID, userID); err != nil {
+		return nil, err
+	}
+
+	comment, err := r.commentService.Create(ctx, userID, models.CreateCommentInput{
+		PostID:  postID,
+		Content: input.Content,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return toGraphComment(comment), nil
+}
+
+// UpdateComment is the resolver for the updateComment field.
+func (r *mutationResolver) UpdateComment(ctx context.Context, id string, input model.UpdateCommentInput) (*model.Comment, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	commentID, err := parseCommentID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	comment, err := r.commentService.Update(ctx, userID, commentID, input.Content)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphComment(comment), nil
+}
+
+// DeleteComment is the resolver for the deleteComment field.
+func (r *mutationResolver) DeleteComment(ctx context.Context, id string) (bool, error) {
+	userID, err := requireUser(ctx)
+	if err != nil {
+		return false, err
+	}
+	commentID, err := parseCommentID(id)
+	if err != nil {
+		return false, err
+	}
+
+	if err := r.commentService.Delete(ctx, userID, commentID); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // Health is the resolver for the health field.
 func (r *queryResolver) Health(ctx context.Context) (string, error) {
 	return "OK", nil
@@ -242,6 +404,81 @@ func (r *queryResolver) ApplicationsByOpportunity(ctx context.Context, opportuni
 		return nil, err
 	}
 	return toGraphApplications(apps), nil
+}
+
+// Posts is the resolver for the posts field.
+func (r *queryResolver) Posts(ctx context.Context, limit *int32, offset *int32) ([]*model.Post, error) {
+	currUserID := optionalUserID(ctx)
+	posts, err := r.postService.List(ctx, currUserID, int32PtrToIntPtr(limit), int32PtrToIntPtr(offset))
+	if err != nil {
+		return nil, err
+	}
+	return toGraphPosts(posts), nil
+}
+
+// PostsByUser is the resolver for the postsByUser field.
+func (r *queryResolver) PostsByUser(ctx context.Context, userID string, limit *int32, offset *int32) ([]*model.Post, error) {
+	targetUserID, err := strconv.Atoi(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user id: %s", userID)
+	}
+	currUserID := optionalUserID(ctx)
+	posts, err := r.postService.ListByUser(ctx, targetUserID, currUserID, int32PtrToIntPtr(limit), int32PtrToIntPtr(offset))
+	if err != nil {
+		return nil, err
+	}
+	return toGraphPosts(posts), nil
+}
+
+// Post is the resolver for the post field.
+func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error) {
+	postID, err := parsePostID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	currUserID := optionalUserID(ctx)
+	post, err := r.postService.GetByID(ctx, postID, currUserID)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphPost(post), nil
+}
+
+// LikesOfPost is the resolver for the likesOfPost field.
+func (r *queryResolver) LikesOfPost(ctx context.Context, id string) ([]*model.Author, error) {
+	postID, err := parsePostID(id)
+	if err != nil {
+		return nil, err
+	}
+	currUserID := optionalUserID(ctx)
+	if _, err := r.postService.GetByID(ctx, postID, currUserID); err != nil {
+		return nil, err
+	}
+
+	authors, err := r.likeService.ListByPost(ctx, postID)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphAuthors(authors), nil
+}
+
+// CommentsOfPost is the resolver for the commentsOfPost field.
+func (r *queryResolver) CommentsOfPost(ctx context.Context, id string) ([]*model.Comment, error) {
+	postID, err := parsePostID(id)
+	if err != nil {
+		return nil, err
+	}
+	currUserID := optionalUserID(ctx)
+	if _, err := r.postService.GetByID(ctx, postID, currUserID); err != nil {
+		return nil, err
+	}
+
+	comments, err := r.commentService.ListByPost(ctx, postID)
+	if err != nil {
+		return nil, err
+	}
+	return toGraphComments(comments), nil
 }
 
 // Mutation returns MutationResolver implementation.

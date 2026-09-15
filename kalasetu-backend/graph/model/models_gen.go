@@ -2,6 +2,10 @@
 
 package model
 
+import (
+	"github.com/99designs/gqlgen/graphql"
+)
+
 type Application struct {
 	ID            string `json:"id"`
 	OpportunityID string `json:"opportunityId"`
@@ -11,15 +15,40 @@ type Application struct {
 	CreatedAt     string `json:"createdAt"`
 }
 
+type Author struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type Comment struct {
+	ID        string `json:"id"`
+	PostID    string `json:"postId"`
+	UserID    string `json:"userId"`
+	UserName  string `json:"userName"`
+	Content   string `json:"content"`
+	CreatedAt string `json:"createdAt"`
+}
+
 type CreateApplicationInput struct {
 	OpportunityID string `json:"opportunityId"`
 	ResumeURL     string `json:"resumeUrl"`
+}
+
+type CreateCommentInput struct {
+	PostID  string `json:"postId"`
+	Content string `json:"content"`
 }
 
 type CreateEventInput struct {
 	Name      string `json:"name"`
 	StartDate string `json:"startDate"`
 	Duration  string `json:"duration"`
+}
+
+type CreatePostInput struct {
+	Content    string            `json:"content"`
+	Media      []*graphql.Upload `json:"media,omitempty"`
+	CategoryID *string           `json:"categoryId,omitempty"`
 }
 
 type Event struct {
@@ -44,11 +73,43 @@ type OnboardingInput struct {
 	ProfilePicture *string  `json:"profilePicture,omitempty"`
 }
 
+type Post struct {
+	ID           string       `json:"id"`
+	UserID       string       `json:"userId"`
+	UserName     string       `json:"userName"`
+	Content      string       `json:"content"`
+	Media        []*PostMedia `json:"media"`
+	CategoryID   *string      `json:"categoryId,omitempty"`
+	CategoryName *string      `json:"categoryName,omitempty"`
+	LikeCount    int32        `json:"likeCount"`
+	CommentCount int32        `json:"commentCount"`
+	IsLikedByMe  bool         `json:"isLikedByMe"`
+	CreatedAt    string       `json:"createdAt"`
+}
+
+type PostMedia struct {
+	ID        string `json:"id"`
+	PostID    string `json:"postId"`
+	URL       string `json:"url"`
+	MediaType string `json:"mediaType"`
+	SortOrder int32  `json:"sortOrder"`
+	CreatedAt string `json:"createdAt"`
+}
+
 type Query struct {
+}
+
+type UpdateCommentInput struct {
+	Content string `json:"content"`
 }
 
 type UpdateEventInput struct {
 	Name      *string `json:"name,omitempty"`
 	StartDate *string `json:"startDate,omitempty"`
 	Duration  *string `json:"duration,omitempty"`
+}
+
+type UpdatePostInput struct {
+	Content    *string `json:"content,omitempty"`
+	CategoryID *string `json:"categoryId,omitempty"`
 }

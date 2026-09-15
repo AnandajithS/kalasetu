@@ -9,6 +9,8 @@ import (
 	"kalasetu/models"
 	"strconv"
 	"time"
+
+	"github.com/99designs/gqlgen/graphql"
 )
 
 // requireUser returns the authenticated user id from the request context,
@@ -27,6 +29,41 @@ func parseEventID(id string) (int, error) {
 		return 0, fmt.Errorf("invalid event id: %s", id)
 	}
 	return parsed, nil
+}
+
+func parsePostID(id string) (int, error) {
+	parsed, err := strconv.Atoi(id)
+	if err != nil {
+		return 0, fmt.Errorf("invalid post id: %s", id)
+	}
+	return parsed, nil
+}
+
+func parseCommentID(id string) (int, error) {
+	parsed, err := strconv.Atoi(id)
+	if err != nil {
+		return 0, fmt.Errorf("invalid comment id: %s", id)
+	}
+	return parsed, nil
+}
+
+func parseOptionalID(id *string) (*int, error) {
+	if id == nil {
+		return nil, nil
+	}
+	parsed, err := strconv.Atoi(*id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid id: %s", *id)
+	}
+	return &parsed, nil
+}
+
+func int32PtrToIntPtr(i *int32) *int {
+	if i == nil {
+		return nil
+	}
+	v := int(*i)
+	return &v
 }
 
 func toGraphEvent(e *models.Event) *model.Event {
@@ -81,6 +118,132 @@ func toGraphApplications(apps []models.Application) []*model.Application {
 	for i := range apps {
 		a := apps[i]
 		result = append(result, toGraphApplication(&a))
+	}
+	return result
+}
+
+// optionalUserID returns the authenticated user id from context, or 0 if not authenticated.
+func optionalUserID(ctx context.Context) int {
+	userID, err := middlewares.GetUserIDFromContext(ctx)
+	if err != nil {
+		return 0
+	}
+	return userID
+}
+
+func toGraphPost(p *models.Post) *model.Post {
+	if p == nil {
+		return nil
+	}
+	var categoryID *string
+	if p.CategoryID != nil {
+		id := strconv.Itoa(*p.CategoryID)
+		categoryID = &id
+	}
+	var categoryName *string
+	if p.CategoryName != "" {
+		categoryName = &p.CategoryName
+	}
+	media := make([]*model.PostMedia, 0, len(p.Media))
+	for i := range p.Media {
+		media = append(media, toGraphPostMedia(&p.Media[i]))
+	}
+	return &model.Post{
+		ID:           strconv.Itoa(p.ID),
+		UserID:       strconv.Itoa(p.UserID),
+		UserName:     p.UserName,
+		Content:      p.Content,
+		Media:        media,
+		CategoryID:   categoryID,
+		CategoryName: categoryName,
+		LikeCount:    int32(p.LikeCount),
+		CommentCount: int32(p.CommentCount),
+		IsLikedByMe:  p.IsLikedByMe,
+		CreatedAt:    p.CreatedAt.Format(time.RFC3339),
+	}
+}
+
+func toGraphPostMedia(m *models.PostMedia) *model.PostMedia {
+	if m == nil {
+		return nil
+	}
+	return &model.PostMedia{
+		ID:        strconv.Itoa(m.ID),
+		PostID:    strconv.Itoa(m.PostID),
+		URL:       m.URL,
+		MediaType: m.MediaType,
+		SortOrder: int32(m.SortOrder),
+		CreatedAt: m.CreatedAt.Format(time.RFC3339),
+	}
+}
+
+// toUploadMediaList converts gqlgen's Upload values into the application-level
+// UploadMedia representation so services stay decoupled from gqlgen.
+func toUploadMediaList(uploads []*graphql.Upload) []models.UploadMedia {
+	if len(uploads) == 0 {
+		return []models.UploadMedia{}
+	}
+	result := make([]models.UploadMedia, 0, len(uploads))
+	for _, u := range uploads {
+		if u == nil {
+			continue
+		}
+		result = append(result, models.UploadMedia{
+			Reader:      u.File,
+			Filename:    u.Filename,
+			ContentType: u.ContentType,
+		})
+	}
+	return result
+}
+
+func toGraphPosts(posts []models.Post) []*model.Post {
+	result := make([]*model.Post, 0, len(posts))
+	for i := range posts {
+		p := posts[i]
+		result = append(result, toGraphPost(&p))
+	}
+	return result
+}
+
+func toGraphAuthor(a *models.Author) *model.Author {
+	if a == nil {
+		return nil
+	}
+	return &model.Author{
+		ID:   strconv.Itoa(a.ID),
+		Name: a.Name,
+	}
+}
+
+func toGraphAuthors(authors []models.Author) []*model.Author {
+	result := make([]*model.Author, 0, len(authors))
+	for i := range authors {
+		a := authors[i]
+		result = append(result, toGraphAuthor(&a))
+	}
+	return result
+}
+
+func toGraphComment(c *models.Comment) *model.Comment {
+	if c == nil {
+		return nil
+	}
+	return &model.Comment{
+		ID:        strconv.Itoa(c.ID),
+		PostID:    strconv.Itoa(c.PostID),
+		UserID:    strconv.Itoa(c.UserID),
+		UserName:  c.UserName,
+		Content:   c.Content,
+		CreatedAt: c.CreatedAt.Format(time.RFC3339),
+	}
+}
+
+func toGraphComments(comments []models.Comment) []*model.Comment {
+	result := make([]*model.Comment, 0, len(comments))
+	for i := range comments {
+		c := comments[i]
+		result = append(result, toGraphComment(&c))
 	}
 	return result
 }

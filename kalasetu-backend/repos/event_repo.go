@@ -90,6 +90,8 @@ func (r *eventRepository) List(ctx context.Context) ([]models.Event, error) {
 	return events, rows.Err()
 }
 
+
+// Update sets only the fields that were provided (For NULL input, COALESCE keeps the existing value).
 func (r *eventRepository) ListByUser(ctx context.Context, userID int) ([]models.Event, error) {
 	query := `
 		SELECT ` + eventSelectColumns + `
