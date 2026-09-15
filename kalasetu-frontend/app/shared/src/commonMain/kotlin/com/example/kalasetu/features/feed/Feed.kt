@@ -88,6 +88,7 @@ private val dummyPosts = listOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreen(
+    viewModel: FeedViewModel,
     userAvatarUrl: String? = null,
     userAvatarBytes: ByteArray? = null,
     userName: String? = null,
@@ -96,6 +97,12 @@ fun FeedScreen(
     onNavigateToHome: () -> Unit = {},
     onMenuClick: () -> Unit = {}
 ) {
+    val posts by viewModel.posts.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadPosts()
+    }
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("FEED", "DISCOVER", "NEW", "HYPED")
     var showComments by remember { mutableStateOf(false) }
@@ -137,6 +144,7 @@ fun FeedScreen(
 
             when (selectedTab) {
                 0 -> FeedContent(
+                    posts = posts,
                     onCommentClick = {
                         showComments = true
                     }
@@ -162,12 +170,12 @@ fun FeedScreen(
 }
 
 @Composable
-internal fun FeedContent(onCommentClick: () -> Unit) {
+internal fun FeedContent(posts: List<ArtistPost>, onCommentClick: () -> Unit) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
-        items(dummyPosts) { post ->
+        items(posts) { post ->
             PostCard(post = post, onCommentClick = onCommentClick)
             Spacer(modifier = Modifier.height(8.dp))
         }
