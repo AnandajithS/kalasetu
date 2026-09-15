@@ -20,17 +20,18 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 @Composable
 fun AuthSignupScreen(
-    onSignUp: (String) -> Unit,
+    onSignUp: (String, String, String) -> Unit,
     onLogin: () -> Unit,
     onBack: () -> Unit,
 ) {
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
     val isEmailValid = email.matches(Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"))
     val passwordsMatch = password == confirmPassword
-    val canSignUp = isEmailValid && password.isNotBlank() && passwordsMatch
+    val canSignUp = name.isNotBlank() && isEmailValid && password.isNotBlank() && passwordsMatch
 
     Box(
         modifier = Modifier
@@ -61,7 +62,8 @@ fun AuthSignupScreen(
             )
 
             Spacer(Modifier.height(32.dp))
-
+            AuthTextField(value = name, onValueChange = { name = it }, placeholder = "Name")
+            Spacer(Modifier.height(16.dp))
             AuthTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -94,7 +96,13 @@ fun AuthSignupScreen(
             Spacer(Modifier.height(24.dp))
 
             Button(
-                onClick = { onSignUp(email) },
+                onClick = {
+                    onSignUp(
+                        name.trim(),
+                        email.trim(),
+                        password
+                    )
+                },
                 enabled = canSignUp,
                 modifier = Modifier
                     .fillMaxWidth()

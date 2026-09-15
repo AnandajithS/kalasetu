@@ -2,10 +2,64 @@
 
 package model
 
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"strconv"
+
+	"github.com/99designs/gqlgen/graphql"
+)
+
+type Achievement struct {
+	Title       string          `json:"title"`
+	Description string          `json:"description"`
+	IconType    AchievementIcon `json:"iconType"`
+}
+
+type Application struct {
+	ID            string `json:"id"`
+	OpportunityID string `json:"opportunityId"`
+	ApplierID     string `json:"applierId"`
+	ResumeURL     string `json:"resumeUrl"`
+	Status        string `json:"status"`
+	CreatedAt     string `json:"createdAt"`
+}
+
+type Author struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type Comment struct {
+	ID        string `json:"id"`
+	PostID    string `json:"postId"`
+	UserID    string `json:"userId"`
+	UserName  string `json:"userName"`
+	Content   string `json:"content"`
+	CreatedAt string `json:"createdAt"`
+}
+
+type CreateApplicationInput struct {
+	OpportunityID string `json:"opportunityId"`
+	ResumeURL     string `json:"resumeUrl"`
+}
+
+type CreateCommentInput struct {
+	PostID  string `json:"postId"`
+	Content string `json:"content"`
+}
+
 type CreateEventInput struct {
 	Name      string `json:"name"`
 	StartDate string `json:"startDate"`
 	Duration  string `json:"duration"`
+}
+
+type CreatePostInput struct {
+	Content    string            `json:"content"`
+	Media      []*graphql.Upload `json:"media,omitempty"`
+	CategoryID *string           `json:"categoryId,omitempty"`
 }
 
 type Event struct {
@@ -30,11 +84,128 @@ type OnboardingInput struct {
 	ProfilePicture *string  `json:"profilePicture,omitempty"`
 }
 
+type Post struct {
+	ID           string       `json:"id"`
+	UserID       string       `json:"userId"`
+	UserName     string       `json:"userName"`
+	Content      string       `json:"content"`
+	Media        []*PostMedia `json:"media"`
+	CategoryID   *string      `json:"categoryId,omitempty"`
+	CategoryName *string      `json:"categoryName,omitempty"`
+	LikeCount    int32        `json:"likeCount"`
+	CommentCount int32        `json:"commentCount"`
+	IsLikedByMe  bool         `json:"isLikedByMe"`
+	CreatedAt    string       `json:"createdAt"`
+}
+
+type PostMedia struct {
+	ID        string `json:"id"`
+	PostID    string `json:"postId"`
+	URL       string `json:"url"`
+	MediaType string `json:"mediaType"`
+	SortOrder int32  `json:"sortOrder"`
+	CreatedAt string `json:"createdAt"`
+}
+
+type Profile struct {
+	ID             string         `json:"id"`
+	Name           string         `json:"name"`
+	Username       string         `json:"username"`
+	Location       string         `json:"location"`
+	Bio            string         `json:"bio"`
+	AvatarURL      *string        `json:"avatarUrl,omitempty"`
+	Email          string         `json:"email"`
+	Followers      int32          `json:"followers"`
+	Following      int32          `json:"following"`
+	ArtworksCount  int32          `json:"artworksCount"`
+	TotalLikes     int32          `json:"totalLikes"`
+	Skills         []string       `json:"skills"`
+	ArtworksImages []string       `json:"artworksImages"`
+	Achievements   []*Achievement `json:"achievements"`
+	RecentPosts    []*ProfilePost `json:"recentPosts"`
+}
+
+type ProfilePost struct {
+	ID           string  `json:"id"`
+	Content      string  `json:"content"`
+	MediaType    *string `json:"mediaType,omitempty"`
+	MediaURI     *string `json:"mediaUri,omitempty"`
+	LikeCount    int32   `json:"likeCount"`
+	CommentCount int32   `json:"commentCount"`
+	CreatedAt    string  `json:"createdAt"`
+}
+
 type Query struct {
+}
+
+type UpdateCommentInput struct {
+	Content string `json:"content"`
 }
 
 type UpdateEventInput struct {
 	Name      *string `json:"name,omitempty"`
 	StartDate *string `json:"startDate,omitempty"`
 	Duration  *string `json:"duration,omitempty"`
+}
+
+type UpdatePostInput struct {
+	Content    *string `json:"content,omitempty"`
+	CategoryID *string `json:"categoryId,omitempty"`
+}
+
+type AchievementIcon string
+
+const (
+	AchievementIconTopCreator AchievementIcon = "TOP_CREATOR"
+	AchievementIconFollowers  AchievementIcon = "FOLLOWERS"
+	AchievementIconFeatured   AchievementIcon = "FEATURED"
+)
+
+var AllAchievementIcon = []AchievementIcon{
+	AchievementIconTopCreator,
+	AchievementIconFollowers,
+	AchievementIconFeatured,
+}
+
+func (e AchievementIcon) IsValid() bool {
+	switch e {
+	case AchievementIconTopCreator, AchievementIconFollowers, AchievementIconFeatured:
+		return true
+	}
+	return false
+}
+
+func (e AchievementIcon) String() string {
+	return string(e)
+}
+
+func (e *AchievementIcon) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AchievementIcon(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AchievementIcon", str)
+	}
+	return nil
+}
+
+func (e AchievementIcon) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *AchievementIcon) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e AchievementIcon) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
