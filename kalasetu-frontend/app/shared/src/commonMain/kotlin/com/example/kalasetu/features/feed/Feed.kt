@@ -422,7 +422,17 @@ private fun ImageCarousel(images: List<String>) {
                 model = images[page],
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                onLoading = {
+                    println("IMAGE LOADING: ${images[page]}")
+                },
+                onSuccess = {
+                    println("IMAGE SUCCESS: ${images[page]}")
+                },
+                onError = {
+                    println("IMAGE ERROR: ${images[page]}")
+                    println("IMAGE ERROR DETAILS: ${it.result.throwable}")
+                }
             )
         }
 
