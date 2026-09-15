@@ -14,7 +14,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 @Composable
 fun AuthSignupScreen(
     onSignUp: (String, String, String) -> Unit,
@@ -61,7 +64,14 @@ fun AuthSignupScreen(
             Spacer(Modifier.height(32.dp))
             AuthTextField(value = name, onValueChange = { name = it }, placeholder = "Name")
             Spacer(Modifier.height(16.dp))
-            AuthTextField(value = email, onValueChange = { email = it }, placeholder = "Email")
+            AuthTextField(
+                value = email,
+                onValueChange = { email = it },
+                placeholder = "Email",
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email
+                )
+            )
             if (email.isNotBlank() && !isEmailValid) {
                 Text(
                     text = "Enter a valid email address",

@@ -24,6 +24,8 @@ sealed class Screen {
     data class EventDetails(val eventId: String) : Screen()
     data class ApplicationForm(val eventId: String) : Screen()
 
+    data object Feed : Screen()
+    data object Store : Screen()
     // --- Organizer Flow ---
     data object SelectArtistCategories : Screen()
     data class OrganizerHome(val userId: String) : Screen()
