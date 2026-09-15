@@ -25,6 +25,7 @@ import com.example.kalasetu.navigation.Screen
 import com.example.kalasetu.theme.KalasetuTheme
 import kotlinx.datetime.LocalDate
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kalasetu.features.feed.FeedViewModel
 import com.example.kalasetu.repository.EventRepository
 import kotlinx.coroutines.launch
 import com.example.kalasetu.repository.AuthRepository
@@ -49,7 +50,7 @@ fun App() {
     val onboardingRepository = remember { OnboardingRepository() }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-
+    val feedViewModel: FeedViewModel = viewModel()
     val isAuthScreen = screen is Screen.OnboardingWelcome ||
                       screen is Screen.AuthSignup ||
                       screen is Screen.AuthOtp ||
@@ -96,13 +97,22 @@ fun App() {
         ) {
             when (val currentScreen = screen) {
                 Screen.Feed -> FeedScreen(
+                    viewModel = feedViewModel,
                     userAvatarUrl = currentProfile?.avatarUrl,
                     userAvatarBytes = currentProfile?.avatarBytes,
                     userName = currentProfile?.name ?: userName,
-                    onNavigateToProfile = { screen = Screen.Profile(userId = "123") },
+                    onNavigateToProfile = {
+                        screen = Screen.Profile(
+                            userId = AuthStore.userId?.toString() ?: ""
+                        )
+                    },
                     onNavigateToStore = { screen = Screen.Store },
                     onNavigateToHome = { screen = Screen.Feed },
-                    onMenuClick = { scope.launch { drawerState.open() } }
+                    onMenuClick = {
+                        scope.launch {
+                            drawerState.open()
+                        }
+                    }
                 )
                 is Screen.OrganizerEventList -> OrganizerHomeScreen(
                     userId = currentScreen.userId,
