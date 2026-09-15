@@ -26,6 +26,15 @@ sealed class Screen {
 
     data object Feed : Screen()
     data object Store : Screen()
+
+    data object UploadPost : Screen()
+    data class PostPreview(
+        val description: String,
+        val imageBytes: List<ByteArray>,
+        val userName: String,
+        val userAvatarUrl: String?,
+        val userAvatarBytes: ByteArray?
+    ) : Screen()
     // --- Organizer Flow ---
     data object SelectArtistCategories : Screen()
     data class OrganizerHome(val userId: String) : Screen()
