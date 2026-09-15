@@ -278,6 +278,18 @@ func toGraphProfilePosts(posts []models.ProfilePost) []*model.ProfilePost {
 	return result
 }
 
+func toGraphAchievements(items []models.Achievement) []*model.Achievement {
+	result := make([]*model.Achievement, 0, len(items))
+	for _, a := range items {
+		result = append(result, &model.Achievement{
+			Title:       a.Title,
+			Description: a.Description,
+			IconType:    model.AchievementIcon(a.IconType),
+		})
+	}
+	return result
+}
+
 func toGraphProfile(p *models.Profile) *model.Profile {
 	var avatarURL *string
 	if p.ProfilePicture != "" {
@@ -297,7 +309,7 @@ func toGraphProfile(p *models.Profile) *model.Profile {
 		TotalLikes:     int32(p.TotalLikes),
 		Skills:         p.Skills,
 		ArtworksImages: p.ArtworksImages,
-		Achievements:   []*model.Achievement{},
+		Achievements:   toGraphAchievements(p.Achievements),
 		RecentPosts:    toGraphProfilePosts(p.RecentPosts),
 	}
 }

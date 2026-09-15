@@ -5,16 +5,22 @@
 
 BEGIN;
 
--- 1) Update the test user's basics (also clears the signup username typo)
+-- 1) Update the test user's basics
 UPDATE users
-   SET user_name = 'followtester',
-       bio = 'Sculptor working in clay and stone. Currently obsessed with gesture and light.',
+   SET bio = 'Sculptor working in clay and stone. Currently obsessed with gesture and light.',
        location = 'Chennai, India',
        profile_picture = 'https://i.pravatar.cc/300?img=60',
        updated_at = NOW()
  WHERE id = 20;
 
--- 2) Posts (artworks / recent posts), most recent first -> ord 1..5
+-- 2) Reset previously seeded content so this script is safe to re-run
+DELETE FROM achievements WHERE user_id = 20;
+DELETE FROM likes     WHERE parent_type = 'post' AND parent_id IN (SELECT id FROM posts WHERE user_id = 20);
+DELETE FROM comments  WHERE parent_type = 'post' AND parent_id IN (SELECT id FROM posts WHERE user_id = 20);
+DELETE FROM post_media WHERE post_id IN (SELECT id FROM posts WHERE user_id = 20);
+DELETE FROM posts WHERE user_id = 20;
+
+-- 3) Posts (artworks / recent posts), most recent first -> ord 1..5
 INSERT INTO posts (user_id, content, created_at) VALUES
   (20, 'Clay bust in progress — big gestures today. The shoulders finally snapped into place.', NOW() - interval '4 hours'),
   (20, 'Bronze cast update: releasing the mold was brutal, but the first pulls look clean.', NOW() - interval '1 day'),
@@ -22,13 +28,13 @@ INSERT INTO posts (user_id, content, created_at) VALUES
   (20, 'Group show next month — did the whole curation wall plan today. So excited.', NOW() - interval '7 days'),
   (20, 'First ever ceramic set is out of the kiln! Glazing day tomorrow ☕', NOW() - interval '13 days');
 
--- 3) Post media
+-- 4) Post media
 INSERT INTO post_media (post_id, object_key, media_type, sort_order)
 SELECT p.id, 'https://picsum.photos/seed/stone' || p.id || '/900/900', 'image/jpeg', 0
 FROM posts p WHERE p.user_id = 20
 ON CONFLICT DO NOTHING;
 
--- 4) Likes
+-- 5) Likes
 WITH ordered_posts AS (
   SELECT id, ROW_NUMBER() OVER (ORDER BY created_at DESC, id DESC) AS ord
   FROM posts WHERE user_id = 20
@@ -49,7 +55,7 @@ WHERE EXISTS (SELECT 1 FROM users u WHERE u.id = l.liker)
     WHERE e.user_id = l.liker AND e.parent_type = 'post' AND e.parent_id = op.id
   );
 
--- 5) Comments
+-- 6) Comments
 WITH ordered_posts AS (
   SELECT id, ROW_NUMBER() OVER (ORDER BY created_at DESC, id DESC) AS ord
   FROM posts WHERE user_id = 20
@@ -72,13 +78,13 @@ WHERE NOT EXISTS (
     AND e.content = l.msg
 );
 
--- 6) Followers / following
+-- 7) Followers / following
 INSERT INTO user_follows (follower_id, following_id) VALUES
   (1, 20), (2, 20), (3, 20), (4, 20), (5, 20), (8, 20), (12, 20),   -- 7 followers
   (20, 1), (20, 2), (20, 8), (20, 12)                                 -- follows 4 others
 ON CONFLICT (follower_id, following_id) DO NOTHING;
 
--- 7) Skills
+-- 8) Skills
 INSERT INTO labels (label_name) VALUES
   ('Sculpture'), ('Ceramics'), ('Public Art')
 ON CONFLICT (label_name) DO NOTHING;
@@ -87,11 +93,17 @@ INSERT INTO user_labels (user_id, label_id)
 SELECT 20, l.id FROM labels l WHERE l.label_name IN ('Sculpture', 'Ceramics', 'Public Art')
 ON CONFLICT (user_id, label_id) DO NOTHING;
 
--- 8) Achievements
-INSERT INTO achievements (user_id, title, description, icon_type) VALUES
-  (20, 'Top Creator', 'Ranked in the top 5% of creators this month', 'TOP_CREATOR'),
-  (20, 'Community Favourite', 'Reached 50 total likes across your artworks', 'FOLLOWERS'),
-  (20, 'Featured Artist', 'Your work was featured on the home feed', 'FEATURED')
-ON CONFLICT DO NOTHING;
+-- 9) Achievements
+INSERT INTO achievements (user_id, title, description, icon_type)
+SELECT 20, t.title, t.description, t.icon_type
+FROM (VALUES
+  ('Top Creator', 'Ranked in the top 5% of creators this month', 'TOP_CREATOR'),
+  ('Community Favourite', 'Reached 50 total likes across your artworks', 'FOLLOWERS'),
+  ('Featured Artist', 'Your work was featured on the home feed', 'FEATURED')
+) AS t(title, description, icon_type)
+WHERE NOT EXISTS (
+  SELECT 1 FROM achievements e
+  WHERE e.user_id = 20 AND e.title = t.title
+);
 
 COMMIT;

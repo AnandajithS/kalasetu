@@ -1,8 +1,50 @@
+scalar Upload
+
 type Query {
   health: String!
   events: [Event!]!
   event(id: ID!): Event
   userEvents: [Event!]!
+  profile(userId: ID!): Profile!
+}
+
+enum AchievementIcon {
+  TOP_CREATOR
+  FOLLOWERS
+  FEATURED
+}
+
+type Achievement {
+  title: String!
+  description: String!
+  iconType: AchievementIcon!
+}
+
+type ProfilePost {
+  id: ID!
+  content: String!
+  mediaType: String
+  mediaUri: String
+  likeCount: Int!
+  commentCount: Int!
+  createdAt: String!
+}
+
+type Profile {
+  id: ID!
+  name: String!
+  location: String!
+  bio: String!
+  avatarUrl: String
+  email: String!
+  followers: Int!
+  following: Int!
+  artworksCount: Int!
+  totalLikes: Int!
+  skills: [String!]!
+  artworksImages: [String!]!
+  achievements: [Achievement!]!
+  recentPosts: [ProfilePost!]!
 }
 
 type Mutation {
@@ -10,6 +52,34 @@ type Mutation {
   updateEvent(id: ID!, input: UpdateEventInput!): Event!
   deleteEvent(id: ID!): Boolean!
   onboardUser(input: OnboardingInput!): Boolean!
+  createPost(input: CreatePostInput!): Post!
+}
+
+type Post {
+  id: ID!
+  userId: ID!
+  userName: String!
+  content: String!
+  media: [PostMedia!]!
+  likeCount: Int!
+  commentCount: Int!
+  isLikedByMe: Boolean!
+  createdAt: String!
+}
+
+type PostMedia {
+  id: ID!
+  postId: ID!
+  url: String!
+  mediaType: String!
+  sortOrder: Int!
+  createdAt: String!
+}
+
+input CreatePostInput {
+  content: String!
+  media: [Upload!]
+  categoryId: ID
 }
 
 type Event {

@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"kalasetu/config"
 
@@ -30,9 +31,10 @@ type ObjectStorage interface {
 
 // S3 is the AWS S3 backed implementation of ObjectStorage.
 type S3 struct {
-	client *s3.Client
-	bucket string
-	region string
+	client          *s3.Client
+	bucket          string
+	region          string
+	publicEndpoint  string
 }
 
 // NewS3 builds an S3 client from the given storage configuration. When no
@@ -60,10 +62,23 @@ func NewS3(cfg *config.StorageConfig) (*S3, error) {
 	}
 
 	return &S3{
-		client: s3.NewFromConfig(awsCfg),
-		bucket: cfg.Bucket,
-		region: region,
+		client:         s3.NewFromConfig(awsCfg, s3Options(cfg)),
+		bucket:         cfg.Bucket,
+		region:         region,
+		publicEndpoint: cfg.PublicEndpoint,
 	}, nil
+}
+
+// s3Options returns client options for the configured endpoint. A custom
+// endpoint (AWS_ENDPOINT, e.g. MinIO) forces path-style addressing.
+func s3Options(cfg *config.StorageConfig) func(*s3.Options) {
+	return func(o *s3.Options) {
+		if cfg.Endpoint == "" {
+			return
+		}
+		o.UsePathStyle = true
+		o.BaseEndpoint = aws.String(cfg.Endpoint)
+	}
 }
 
 // Upload implements ObjectStorage.
@@ -86,8 +101,12 @@ func (s *S3) Delete(ctx context.Context, key string) error {
 	return err
 }
 
-// GetURL implements ObjectStorage. The bucket is public-read, so the object is
-// reachable through the virtual-hosted-style S3 endpoint.
+// GetURL implements ObjectStorage. When a public endpoint is configured (e.g.
+// MinIO) the object URL is constructed path-style from it; otherwise the
+// virtual-hosted-style AWS S3 URL is returned for the public-read bucket.
 func (s *S3) GetURL(_ context.Context, key string) (string, error) {
+	if s.publicEndpoint != "" {
+		return fmt.Sprintf("%s/%s/%s", strings.TrimRight(s.publicEndpoint, "/"), s.bucket, key), nil
+	}
 	return fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", s.bucket, s.region, key), nil
 }

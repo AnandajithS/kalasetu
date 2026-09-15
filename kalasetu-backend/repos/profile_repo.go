@@ -12,6 +12,10 @@ type ProfileRepository interface {
 	CountArtworks(ctx context.Context, userID int) (int, error)
 	ListArtworkImages(ctx context.Context, userID int) ([]string, error)
 	CountTotalLikes(ctx context.Context, userID int) (int, error)
+	CountFollowers(ctx context.Context, userID int) (int, error)
+	CountFollowing(ctx context.Context, userID int) (int, error)
+	ListSkills(ctx context.Context, userID int) ([]string, error)
+	ListAchievements(ctx context.Context, userID int) ([]models.Achievement, error)
 	ListRecentPosts(ctx context.Context, userID int, limit int) ([]models.ProfilePost, error)
 }
 
@@ -25,7 +29,7 @@ func NewProfileRepository(db *sql.DB) ProfileRepository {
 
 func (r *profileRepository) GetBasics(ctx context.Context, userID int) (*models.Profile, error) {
 	query := `
-		SELECT id, name, COALESCE(user_name, ''), COALESCE(location, ''),
+		SELECT id, name, COALESCE(location, ''),
 		       COALESCE(bio, ''), COALESCE(profile_picture, ''), email
 		FROM users
 		WHERE id = $1
@@ -34,7 +38,6 @@ func (r *profileRepository) GetBasics(ctx context.Context, userID int) (*models.
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
 		&profile.ID,
 		&profile.Name,
-		&profile.UserName,
 		&profile.Location,
 		&profile.Bio,
 		&profile.ProfilePicture,
@@ -97,6 +100,77 @@ func (r *profileRepository) CountTotalLikes(ctx context.Context, userID int) (in
 		return 0, err
 	}
 	return count, nil
+}
+
+func (r *profileRepository) CountFollowers(ctx context.Context, userID int) (int, error) {
+	query := `
+		SELECT COUNT(*) FROM user_follows WHERE following_id = $1
+	`
+	var count int
+	if err := r.db.QueryRowContext(ctx, query, userID).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (r *profileRepository) CountFollowing(ctx context.Context, userID int) (int, error) {
+	query := `
+		SELECT COUNT(*) FROM user_follows WHERE follower_id = $1
+	`
+	var count int
+	if err := r.db.QueryRowContext(ctx, query, userID).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (r *profileRepository) ListSkills(ctx context.Context, userID int) ([]string, error) {
+	query := `
+		SELECT l.label_name
+		FROM user_labels ul
+		JOIN labels l ON l.id = ul.label_id
+		WHERE ul.user_id = $1
+		ORDER BY l.label_name ASC
+	`
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	skills := []string{}
+	for rows.Next() {
+		var skill string
+		if err := rows.Scan(&skill); err != nil {
+			return nil, err
+		}
+		skills = append(skills, skill)
+	}
+	return skills, rows.Err()
+}
+
+func (r *profileRepository) ListAchievements(ctx context.Context, userID int) ([]models.Achievement, error) {
+	query := `
+		SELECT title, description, icon_type
+		FROM achievements
+		WHERE user_id = $1
+		ORDER BY id ASC
+	`
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	achievements := []models.Achievement{}
+	for rows.Next() {
+		var a models.Achievement
+		if err := rows.Scan(&a.Title, &a.Description, &a.IconType); err != nil {
+			return nil, err
+		}
+		achievements = append(achievements, a)
+	}
+	return achievements, rows.Err()
 }
 
 func (r *profileRepository) ListRecentPosts(ctx context.Context, userID int, limit int) ([]models.ProfilePost, error) {

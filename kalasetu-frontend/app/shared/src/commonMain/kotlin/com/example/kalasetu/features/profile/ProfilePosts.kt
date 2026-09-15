@@ -39,13 +39,41 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.fillMaxSize
 import coil3.compose.AsyncImage
+import kotlinx.datetime.Instant
+import kotlin.time.Clock
+
+object RelativeTime {
+    fun format(createdAt: String): String = try {
+        val now = Clock.System.now()
+        val diff = now - Instant.parse(createdAt)
+        when {
+            diff.inWholeMinutes < 1 -> "Just now"
+            diff.inWholeMinutes < 60 -> "${diff.inWholeMinutes}m ago"
+            diff.inWholeHours < 24 -> "${diff.inWholeHours}h ago"
+            else -> "${diff.inWholeDays}d ago"
+        }
+    } catch (e: Exception) {
+        "Just now"
+    }
+}
+
 data class DraftPost(
     val timeAgo: String,
     val content: String,
     val likes: Int,
     val comments: Int,
     val hasImage: Boolean,
-    val imageBytes: List<ByteArray> = emptyList()
+    val imageBytes: List<ByteArray> = emptyList(),
+    val imageUrl: String? = null,
+)
+
+internal fun profilePostToDraftPost(post: ProfilePost): DraftPost = DraftPost(
+    timeAgo = RelativeTime.format(post.createdAt),
+    content = post.content,
+    likes = post.likeCount,
+    comments = post.commentCount,
+    hasImage = post.mediaUri != null,
+    imageUrl = post.mediaUri
 )
 
 @Composable
@@ -131,7 +159,18 @@ fun PostCard(
                 modifier = Modifier.padding(horizontal = 14.dp)
             )
 
-            if (post.imageBytes.isNotEmpty()) {
+            if (post.imageUrl != null) {
+                Spacer(Modifier.height(10.dp))
+
+                AsyncImage(
+                    model = post.imageUrl,
+                    contentDescription = "Post image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                )
+            } else if (post.imageBytes.isNotEmpty()) {
                 Spacer(Modifier.height(10.dp))
 
                 PostImageCarousel(

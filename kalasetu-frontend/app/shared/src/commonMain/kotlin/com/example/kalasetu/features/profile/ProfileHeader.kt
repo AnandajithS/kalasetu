@@ -200,11 +200,13 @@ fun ProfileInfo(profile: Profile) {
 
         Spacer(Modifier.height(2.dp))
 
-        Text(
-            text = "@${profile.username}",
-            fontSize = 14.sp,
-            color = TextSecondary,
-        )
+        if (profile.username.isNotBlank()) {
+            Text(
+                text = "@${profile.username}",
+                fontSize = 14.sp,
+                color = TextSecondary,
+            )
+        }
 
         if (profile.location.isNotBlank()) {
             Spacer(Modifier.height(6.dp))
