@@ -18,6 +18,7 @@ import com.example.kalasetu.features.feed.SidebarContent
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kalasetu.features.application.*
 import com.example.kalasetu.features.event.*
+import com.example.kalasetu.features.opportunity.CreateOpportunityScreen
 import com.example.kalasetu.features.onboarding.*
 import com.example.kalasetu.features.profile.*
 import com.example.kalasetu.navigation.BackHandler
@@ -515,7 +516,7 @@ fun App() {
                 Screen.SelectArtistCategories -> SelectArtistCategoriesScreen(
                     onNext = { categories ->
                         draftEvent = draftEvent.copy(categories = categories)
-                        screen = Screen.SelectArtistCategories
+                        screen = Screen.TimelineAndLocation
                     },
                     onBack = { screen = Screen.CreateEvent },
                 )
@@ -597,8 +598,23 @@ fun App() {
                             onApplicationClick = { appId ->
                                 screen = Screen.ApplicationPreview(appId)
                             },
+                            onCreateOpportunity = {
+                                screen = Screen.CreateOpportunity(event.id)
+                            },
+                            onOpportunityClick = { oppId ->
+                                // For now, maybe edit or just stay there
+                            }
                         )
                     }
+                }
+
+                // ─── Create Opportunity (Organizer) ───
+                is Screen.CreateOpportunity -> {
+                    CreateOpportunityScreen(
+                        eventId = currentScreen.eventId,
+                        onBack = { screen = Screen.EventApplications(currentScreen.eventId) },
+                        onFinish = { screen = Screen.EventApplications(currentScreen.eventId) }
+                    )
                 }
 
                 // ─── Application Preview (Organizer) ───
