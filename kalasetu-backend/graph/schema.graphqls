@@ -15,6 +15,47 @@ type Query {
   application(id: ID!): Application
   myApplications: [Application!]!
   applicationsByOpportunity(opportunityId: ID!): [Application!]!
+  profile(userId: ID!): Profile!
+}
+
+enum AchievementIcon {
+  TOP_CREATOR
+  FOLLOWERS
+  FEATURED
+}
+
+type Achievement {
+  title: String!
+  description: String!
+  iconType: AchievementIcon!
+}
+
+type ProfilePost {
+  id: ID!
+  content: String!
+  mediaType: String
+  mediaUri: String
+  likeCount: Int!
+  commentCount: Int!
+  createdAt: String!
+}
+
+type Profile {
+  id: ID!
+  name: String!
+  username: String!
+  location: String!
+  bio: String!
+  avatarUrl: String
+  email: String!
+  followers: Int!
+  following: Int!
+  artworksCount: Int!
+  totalLikes: Int!
+  skills: [String!]!
+  artworksImages: [String!]!
+  achievements: [Achievement!]!
+  recentPosts: [ProfilePost!]!
 }
 
 type Mutation {

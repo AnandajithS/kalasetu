@@ -90,10 +90,13 @@ func NewApp() *App {
 	likeRepo := repos.NewLikeRepository(db)
 	likeService := services.NewLikeService(likeRepo)
 
+	profileRepo := repos.NewProfileRepository(db)
+	profileService := services.NewProfileService(profileRepo, objectStorage)
+
 	apiV1 := r.Group("/api/v1")
 	routes.RegisterAuthRoutes(apiV1, authHandler)
 
-	resolver := graph.NewResolver(eventService, applicationService, postService, commentService, likeService, userService)
+	resolver := graph.NewResolver(eventService, applicationService, postService, commentService, likeService, userService, profileService)
 	srv := gqlSetup(resolver)
 
 	return &App{Router: r, Srv: srv, Port: port}
