@@ -3,30 +3,26 @@ package models
 import "time"
 
 type Post struct {
-	ID           int       `json:"id"`
-	UserID       int       `json:"user_id"`
-	UserName     string    `json:"user_name"`
-	Content      string    `json:"content"`
-	MediaType    *string   `json:"media_type"`
-	MediaURI     *string   `json:"media_uri"`
-	CategoryID   *int      `json:"category_id"`
-	CategoryName string    `json:"category_name"`
-	LikeCount    int       `json:"like_count"`
-	CommentCount int       `json:"comment_count"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID           int         `json:"id"`
+	UserID       int         `json:"user_id"`
+	UserName     string      `json:"user_name"`
+	Content      string      `json:"content"`
+	Media        []PostMedia `json:"media"`
+	CategoryID   *int        `json:"category_id"`
+	CategoryName string      `json:"category_name"`
+	LikeCount    int         `json:"like_count"`
+	CommentCount int         `json:"comment_count"`
+	CreatedAt    time.Time   `json:"created_at"`
 }
 
 type CreatePostInput struct {
-	Content    string  `json:"content"`
-	MediaType  *string `json:"media_type"`
-	MediaURI   *string `json:"media_uri"`
-	CategoryID *int    `json:"category_id"`
+	Content    string        `json:"content"`
+	Media      []UploadMedia `json:"media"`
+	CategoryID *int          `json:"category_id"`
 }
 
 type UpdatePostInput struct {
 	Content    *string `json:"content"`
-	MediaType  *string `json:"media_type"`
-	MediaURI   *string `json:"media_uri"`
 	CategoryID *int    `json:"category_id"`
 }
 

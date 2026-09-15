@@ -2,6 +2,11 @@
 #
 # https://gqlgen.com/getting-started/
 
+# Upload is built in to gqlgen (github.com/99designs/gqlgen/graphql.Upload).
+# It is declared here so schema validation passes; file uploads arrive via the
+# GraphQL multipart request transport.
+scalar Upload
+
 type Query {
   health: String!
   events: [Event!]!
@@ -56,12 +61,20 @@ type Post {
   userId: ID!
   userName: String!
   content: String!
-  mediaType: String
-  mediaUri: String
+  media: [PostMedia!]!
   categoryId: ID
   categoryName: String
   likeCount: Int!
   commentCount: Int!
+  createdAt: String!
+}
+
+type PostMedia {
+  id: ID!
+  postId: ID!
+  url: String!
+  mediaType: String!
+  sortOrder: Int!
   createdAt: String!
 }
 
@@ -81,15 +94,12 @@ type Comment {
 
 input CreatePostInput {
   content: String!
-  mediaType: String
-  mediaUri: String
+  media: [Upload!]
   categoryId: ID
 }
 
 input UpdatePostInput {
   content: String
-  mediaType: String
-  mediaUri: String
   categoryId: ID
 }
 

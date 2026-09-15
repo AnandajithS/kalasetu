@@ -8,6 +8,7 @@ import (
 	"kalasetu/repos"
 	"kalasetu/routes"
 	"kalasetu/services"
+	"kalasetu/storage"
 	"log"
 	"os"
 
@@ -65,7 +66,23 @@ func NewApp() *App {
 	applicationRepo := repos.NewApplicationRepository(db)
 	applicationService := services.NewApplicationService(applicationRepo)
 	postRepo := repos.NewPostRepository(db)
-	postService := services.NewPostService(postRepo)
+	postMediaRepo := repos.NewPostMediaRepository(db)
+
+	var objectStorage storage.ObjectStorage
+	storageCfg := config.LoadStorageConfig()
+	if storageCfg.IsConfigured() {
+		s3Storage, err := storage.NewS3(storageCfg)
+		if err != nil {
+			log.Printf("Warning: failed to initialise object storage: %v. Post media uploads will fail at runtime.", err)
+		} else {
+			objectStorage = s3Storage
+			log.Printf("Object storage configured for bucket %q in region %q", storageCfg.Bucket, storageCfg.Region)
+		}
+	} else {
+		log.Println("Note: object storage (AWS_BUCKET) is not configured. Posts can be created without media.")
+	}
+
+	postService := services.NewPostService(postRepo, postMediaRepo, objectStorage)
 
 	commentRepo := repos.NewCommentRepository(db)
 	commentService := services.NewCommentService(commentRepo)
@@ -88,6 +105,7 @@ func gqlSetup(resolver *graph.Resolver) *handler.Server {
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{})
+	srv.AddTransport(transport.MultipartForm{})
 
 	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
 

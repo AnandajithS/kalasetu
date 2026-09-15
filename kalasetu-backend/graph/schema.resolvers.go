@@ -164,8 +164,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input model.CreatePos
 
 	post, err := r.postService.Create(ctx, userID, models.CreatePostInput{
 		Content:    input.Content,
-		MediaType:  input.MediaType,
-		MediaURI:   input.MediaURI,
+		Media:      toUploadMediaList(input.Media),
 		CategoryID: categoryID,
 	})
 	if err != nil {
@@ -191,8 +190,6 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, id string, input mode
 
 	post, err := r.postService.Update(ctx, userID, postID, models.UpdatePostInput{
 		Content:    input.Content,
-		MediaType:  input.MediaType,
-		MediaURI:   input.MediaURI,
 		CategoryID: categoryID,
 	})
 	if err != nil {

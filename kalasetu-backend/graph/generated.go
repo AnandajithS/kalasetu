@@ -94,10 +94,18 @@ type ComplexityRoot struct {
 		CreatedAt    func(childComplexity int) int
 		ID           func(childComplexity int) int
 		LikeCount    func(childComplexity int) int
-		MediaType    func(childComplexity int) int
-		MediaURI     func(childComplexity int) int
+		Media        func(childComplexity int) int
 		UserID       func(childComplexity int) int
 		UserName     func(childComplexity int) int
+	}
+
+	PostMedia struct {
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		MediaType func(childComplexity int) int
+		PostID    func(childComplexity int) int
+		SortOrder func(childComplexity int) int
+		URL       func(childComplexity int) int
 	}
 
 	Query struct {
@@ -484,18 +492,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Post.LikeCount(childComplexity), true
-	case "Post.mediaType":
-		if e.ComplexityRoot.Post.MediaType == nil {
+	case "Post.media":
+		if e.ComplexityRoot.Post.Media == nil {
 			break
 		}
 
-		return e.ComplexityRoot.Post.MediaType(childComplexity), true
-	case "Post.mediaUri":
-		if e.ComplexityRoot.Post.MediaURI == nil {
-			break
-		}
-
-		return e.ComplexityRoot.Post.MediaURI(childComplexity), true
+		return e.ComplexityRoot.Post.Media(childComplexity), true
 	case "Post.userId":
 		if e.ComplexityRoot.Post.UserID == nil {
 			break
@@ -508,6 +510,43 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Post.UserName(childComplexity), true
+
+	case "PostMedia.createdAt":
+		if e.ComplexityRoot.PostMedia.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PostMedia.CreatedAt(childComplexity), true
+	case "PostMedia.id":
+		if e.ComplexityRoot.PostMedia.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PostMedia.ID(childComplexity), true
+	case "PostMedia.mediaType":
+		if e.ComplexityRoot.PostMedia.MediaType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PostMedia.MediaType(childComplexity), true
+	case "PostMedia.postId":
+		if e.ComplexityRoot.PostMedia.PostID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PostMedia.PostID(childComplexity), true
+	case "PostMedia.sortOrder":
+		if e.ComplexityRoot.PostMedia.SortOrder == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PostMedia.SortOrder(childComplexity), true
+	case "PostMedia.url":
+		if e.ComplexityRoot.PostMedia.URL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PostMedia.URL(childComplexity), true
 
 	case "Query.application":
 		if e.ComplexityRoot.Query.Application == nil {
@@ -1948,10 +1987,8 @@ func (ec *executionContext) fieldContext_Mutation_createPost(ctx context.Context
 				return ec.fieldContext_Post_userName(ctx, field)
 			case "content":
 				return ec.fieldContext_Post_content(ctx, field)
-			case "mediaType":
-				return ec.fieldContext_Post_mediaType(ctx, field)
-			case "mediaUri":
-				return ec.fieldContext_Post_mediaUri(ctx, field)
+			case "media":
+				return ec.fieldContext_Post_media(ctx, field)
 			case "categoryId":
 				return ec.fieldContext_Post_categoryId(ctx, field)
 			case "categoryName":
@@ -2013,10 +2050,8 @@ func (ec *executionContext) fieldContext_Mutation_updatePost(ctx context.Context
 				return ec.fieldContext_Post_userName(ctx, field)
 			case "content":
 				return ec.fieldContext_Post_content(ctx, field)
-			case "mediaType":
-				return ec.fieldContext_Post_mediaType(ctx, field)
-			case "mediaUri":
-				return ec.fieldContext_Post_mediaUri(ctx, field)
+			case "media":
+				return ec.fieldContext_Post_media(ctx, field)
 			case "categoryId":
 				return ec.fieldContext_Post_categoryId(ctx, field)
 			case "categoryName":
@@ -2435,59 +2470,44 @@ func (ec *executionContext) fieldContext_Post_content(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_mediaType(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_media(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Post_mediaType,
+		ec.fieldContext_Post_media,
 		func(ctx context.Context) (any, error) {
-			return obj.MediaType, nil
+			return obj.Media, nil
 		},
 		nil,
-		ec.marshalOString2ᚖstring,
+		ec.marshalNPostMedia2ᚕᚖkalasetuᚋgraphᚋmodelᚐPostMediaᚄ,
 		true,
-		false,
+		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Post_mediaType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Post_media(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Post_mediaUri(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Post_mediaUri,
-		func(ctx context.Context) (any, error) {
-			return obj.MediaURI, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Post_mediaUri(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Post",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_PostMedia_id(ctx, field)
+			case "postId":
+				return ec.fieldContext_PostMedia_postId(ctx, field)
+			case "url":
+				return ec.fieldContext_PostMedia_url(ctx, field)
+			case "mediaType":
+				return ec.fieldContext_PostMedia_mediaType(ctx, field)
+			case "sortOrder":
+				return ec.fieldContext_PostMedia_sortOrder(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_PostMedia_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PostMedia", field.Name)
 		},
 	}
 	return fc, nil
@@ -2628,6 +2648,180 @@ func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.C
 func (ec *executionContext) fieldContext_Post_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PostMedia_id(ctx context.Context, field graphql.CollectedField, obj *model.PostMedia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PostMedia_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PostMedia_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PostMedia",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PostMedia_postId(ctx context.Context, field graphql.CollectedField, obj *model.PostMedia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PostMedia_postId,
+		func(ctx context.Context) (any, error) {
+			return obj.PostID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PostMedia_postId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PostMedia",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PostMedia_url(ctx context.Context, field graphql.CollectedField, obj *model.PostMedia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PostMedia_url,
+		func(ctx context.Context) (any, error) {
+			return obj.URL, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PostMedia_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PostMedia",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PostMedia_mediaType(ctx context.Context, field graphql.CollectedField, obj *model.PostMedia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PostMedia_mediaType,
+		func(ctx context.Context) (any, error) {
+			return obj.MediaType, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PostMedia_mediaType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PostMedia",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PostMedia_sortOrder(ctx context.Context, field graphql.CollectedField, obj *model.PostMedia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PostMedia_sortOrder,
+		func(ctx context.Context) (any, error) {
+			return obj.SortOrder, nil
+		},
+		nil,
+		ec.marshalNInt2int32,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PostMedia_sortOrder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PostMedia",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PostMedia_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.PostMedia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PostMedia_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PostMedia_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PostMedia",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2954,10 +3148,8 @@ func (ec *executionContext) fieldContext_Query_posts(_ context.Context, field gr
 				return ec.fieldContext_Post_userName(ctx, field)
 			case "content":
 				return ec.fieldContext_Post_content(ctx, field)
-			case "mediaType":
-				return ec.fieldContext_Post_mediaType(ctx, field)
-			case "mediaUri":
-				return ec.fieldContext_Post_mediaUri(ctx, field)
+			case "media":
+				return ec.fieldContext_Post_media(ctx, field)
 			case "categoryId":
 				return ec.fieldContext_Post_categoryId(ctx, field)
 			case "categoryName":
@@ -3008,10 +3200,8 @@ func (ec *executionContext) fieldContext_Query_post(ctx context.Context, field g
 				return ec.fieldContext_Post_userName(ctx, field)
 			case "content":
 				return ec.fieldContext_Post_content(ctx, field)
-			case "mediaType":
-				return ec.fieldContext_Post_mediaType(ctx, field)
-			case "mediaUri":
-				return ec.fieldContext_Post_mediaUri(ctx, field)
+			case "media":
+				return ec.fieldContext_Post_media(ctx, field)
 			case "categoryId":
 				return ec.fieldContext_Post_categoryId(ctx, field)
 			case "categoryName":
@@ -4825,7 +5015,7 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"content", "mediaType", "mediaUri", "categoryId"}
+	fieldsInOrder := [...]string{"content", "media", "categoryId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4839,20 +5029,13 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 				return it, err
 			}
 			it.Content = data
-		case "mediaType":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mediaType"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+		case "media":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("media"))
+			data, err := ec.unmarshalOUpload2ᚕᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUploadᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.MediaType = data
-		case "mediaUri":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mediaUri"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.MediaURI = data
+			it.Media = data
 		case "categoryId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categoryId"))
 			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
@@ -5015,7 +5198,7 @@ func (ec *executionContext) unmarshalInputUpdatePostInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"content", "mediaType", "mediaUri", "categoryId"}
+	fieldsInOrder := [...]string{"content", "categoryId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5029,20 +5212,6 @@ func (ec *executionContext) unmarshalInputUpdatePostInput(ctx context.Context, o
 				return it, err
 			}
 			it.Content = data
-		case "mediaType":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mediaType"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.MediaType = data
-		case "mediaUri":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mediaUri"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.MediaURI = data
 		case "categoryId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categoryId"))
 			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
@@ -5469,10 +5638,11 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "mediaType":
-			out.Values[i] = ec._Post_mediaType(ctx, field, obj)
-		case "mediaUri":
-			out.Values[i] = ec._Post_mediaUri(ctx, field, obj)
+		case "media":
+			out.Values[i] = ec._Post_media(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "categoryId":
 			out.Values[i] = ec._Post_categoryId(ctx, field, obj)
 		case "categoryName":
@@ -5489,6 +5659,70 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "createdAt":
 			out.Values[i] = ec._Post_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var postMediaImplementors = []string{"PostMedia"}
+
+func (ec *executionContext) _PostMedia(ctx context.Context, sel ast.SelectionSet, obj *model.PostMedia) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, postMediaImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PostMedia")
+		case "id":
+			out.Values[i] = ec._PostMedia_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "postId":
+			out.Values[i] = ec._PostMedia_postId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "url":
+			out.Values[i] = ec._PostMedia_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mediaType":
+			out.Values[i] = ec._PostMedia_mediaType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sortOrder":
+			out.Values[i] = ec._PostMedia_sortOrder(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._PostMedia_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6330,6 +6564,32 @@ func (ec *executionContext) marshalNPost2ᚖkalasetuᚋgraphᚋmodelᚐPost(ctx 
 	return ec._Post(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNPostMedia2ᚕᚖkalasetuᚋgraphᚋmodelᚐPostMediaᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PostMedia) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNPostMedia2ᚖkalasetuᚋgraphᚋmodelᚐPostMedia(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNPostMedia2ᚖkalasetuᚋgraphᚋmodelᚐPostMedia(ctx context.Context, sel ast.SelectionSet, v *model.PostMedia) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PostMedia(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6359,6 +6619,28 @@ func (ec *executionContext) unmarshalNUpdateEventInput2kalasetuᚋgraphᚋmodel�
 func (ec *executionContext) unmarshalNUpdatePostInput2kalasetuᚋgraphᚋmodelᚐUpdatePostInput(ctx context.Context, v any) (model.UpdatePostInput, error) {
 	res, err := ec.unmarshalInputUpdatePostInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (*graphql.Upload, error) {
+	res, err := graphql.UnmarshalUpload(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v *graphql.Upload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	_ = sel
+	res := graphql.MarshalUpload(*v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -6623,6 +6905,42 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	_ = ctx
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOUpload2ᚕᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUploadᚄ(ctx context.Context, v any) ([]*graphql.Upload, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*graphql.Upload, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOUpload2ᚕᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUploadᚄ(ctx context.Context, sel ast.SelectionSet, v []*graphql.Upload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

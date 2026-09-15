@@ -3,16 +3,26 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"kalasetu/models"
 	"kalasetu/repos"
+	"kalasetu/storage"
+	"log"
+	"path/filepath"
+	"strings"
+
+	"github.com/google/uuid"
 )
 
 var (
-	ErrPostNotFound     = errors.New("post not found")
-	ErrCommentNotFound  = errors.New("comment not found")
-	ErrPostForbidden    = errors.New("you are not the owner of this post")
-	ErrCommentForbidden = errors.New("you are not the owner of this comment")
+	ErrPostNotFound        = errors.New("post not found")
+	ErrCommentNotFound     = errors.New("comment not found")
+	ErrPostForbidden       = errors.New("you are not the owner of this post")
+	ErrCommentForbidden    = errors.New("you are not the owner of this comment")
+	ErrStorageUnconfigured = errors.New("object storage is not configured")
 )
+
+const maxMediaPerPost = 10
 
 type PostService interface {
 	Create(ctx context.Context, userID int, input models.CreatePostInput) (*models.Post, error)
@@ -23,29 +33,134 @@ type PostService interface {
 }
 
 type postService struct {
-	postRepo repos.PostRepository
+	postRepo      repos.PostRepository
+	postMediaRepo repos.PostMediaRepository
+	storage       storage.ObjectStorage
 }
 
-func NewPostService(postRepo repos.PostRepository) PostService {
-	return &postService{postRepo: postRepo}
+func NewPostService(
+	postRepo repos.PostRepository,
+	postMediaRepo repos.PostMediaRepository,
+	objectStorage storage.ObjectStorage,
+) PostService {
+	return &postService{
+		postRepo:      postRepo,
+		postMediaRepo: postMediaRepo,
+		storage:       objectStorage,
+	}
 }
 
+// Create persists the post, uploads each attached file to object storage,
+// records the resulting object keys in post_media and returns the post with
+// its media. Upload order is preserved via SortOrder.
 func (s *postService) Create(ctx context.Context, userID int, input models.CreatePostInput) (*models.Post, error) {
+	if len(input.Media) > int(maxMediaPerPost) {
+		return nil, fmt.Errorf("a post can have at most %d media files", maxMediaPerPost)
+	}
+
 	post, err := s.postRepo.Create(ctx, &models.Post{
 		UserID:     userID,
 		Content:    input.Content,
-		MediaType:  input.MediaType,
-		MediaURI:   input.MediaURI,
 		CategoryID: input.CategoryID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	// Refetch so the response includes user/category names and counts.
-	return s.postRepo.FindByID(ctx, post.ID)
+
+	if err := s.attachMedia(ctx, post.ID, input.Media); err != nil {
+		return nil, err
+	}
+
+	return s.getPost(ctx, post.ID)
 }
 
-func (s *postService) GetByID(ctx context.Context, id int) (*models.Post, error) {
+// attachMedia uploads each file to object storage and records its object key
+// in post_media. If any step fails, already-uploaded objects are removed so no
+// orphaned files remain.
+func (s *postService) attachMedia(ctx context.Context, postID int, media []models.UploadMedia) error {
+	if len(media) == 0 {
+		return nil
+	}
+	if s.storage == nil {
+		return ErrStorageUnconfigured
+	}
+
+	rows := make([]models.PostMedia, 0, len(media))
+	for i, file := range media {
+		key, err := s.generateObjectKey(postID, file.Filename)
+		if err != nil {
+			return err
+		}
+		if err := s.storage.Upload(ctx, key, file.Reader, file.ContentType); err != nil {
+			s.cleanupUploaded(ctx, rows)
+			return fmt.Errorf("failed to upload media: %w", err)
+		}
+		rows = append(rows, models.PostMedia{
+			PostID:    postID,
+			ObjectKey: key,
+			MediaType: file.ContentType,
+			SortOrder: i,
+		})
+	}
+
+	if err := s.postMediaRepo.CreateMany(ctx, postID, rows); err != nil {
+		s.cleanupUploaded(ctx, rows)
+		return err
+	}
+	return nil
+}
+
+// cleanupUploaded best-effort removes already-uploaded objects when a later
+// step in the creation flow fails.
+func (s *postService) cleanupUploaded(ctx context.Context, media []models.PostMedia) {
+	if s.storage == nil {
+		return
+	}
+	for _, m := range media {
+		if err := s.storage.Delete(ctx, m.ObjectKey); err != nil {
+			log.Printf("warning: failed to delete orphaned object %q: %v", m.ObjectKey, err)
+		}
+	}
+}
+
+// generateObjectKey builds a unique, storage-friendly key of the form
+// posts/{postID}/{uuid}.{ext}. The original filename is never used verbatim.
+func (s *postService) generateObjectKey(postID int, filename string) (string, error) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return "", fmt.Errorf("failed to generate object key: %w", err)
+	}
+	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(filename), "."))
+	if ext == "" {
+		ext = "bin"
+	}
+	return fmt.Sprintf("posts/%d/%s.%s", postID, id.String(), ext), nil
+}
+
+// hydrateMedia loads post_media rows for a post and resolves each object key to
+// a public URL.
+func (s *postService) hydrateMedia(ctx context.Context, post *models.Post) error {
+	if post == nil {
+		return nil
+	}
+	media, err := s.postMediaRepo.ListByPost(ctx, post.ID)
+	if err != nil {
+		return err
+	}
+	if s.storage != nil {
+		for i := range media {
+			media[i].URL, err = s.storage.GetURL(ctx, media[i].ObjectKey)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	post.Media = media
+	return nil
+}
+
+// getPost fetches a post by id and hydrates its media with public URLs.
+func (s *postService) getPost(ctx context.Context, id int) (*models.Post, error) {
 	post, err := s.postRepo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -53,11 +168,52 @@ func (s *postService) GetByID(ctx context.Context, id int) (*models.Post, error)
 	if post == nil {
 		return nil, ErrPostNotFound
 	}
+	if err := s.hydrateMedia(ctx, post); err != nil {
+		return nil, err
+	}
 	return post, nil
 }
 
+func (s *postService) GetByID(ctx context.Context, id int) (*models.Post, error) {
+	return s.getPost(ctx, id)
+}
+
 func (s *postService) List(ctx context.Context) ([]models.Post, error) {
-	return s.postRepo.List(ctx)
+	posts, err := s.postRepo.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(posts) == 0 {
+		return posts, nil
+	}
+
+	ids := make([]int, 0, len(posts))
+	for i := range posts {
+		ids = append(ids, posts[i].ID)
+	}
+
+	mediaByPost, err := s.postMediaRepo.ListByPosts(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range posts {
+		media, ok := mediaByPost[posts[i].ID]
+		if !ok {
+			posts[i].Media = []models.PostMedia{}
+			continue
+		}
+		if s.storage != nil {
+			for j := range media {
+				media[j].URL, err = s.storage.GetURL(ctx, media[j].ObjectKey)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+		posts[i].Media = media
+	}
+	return posts, nil
 }
 
 func (s *postService) Update(ctx context.Context, userID, id int, input models.UpdatePostInput) (*models.Post, error) {
@@ -74,7 +230,7 @@ func (s *postService) Update(ctx context.Context, userID, id int, input models.U
 	if err := s.postRepo.Update(ctx, id, input); err != nil {
 		return nil, err
 	}
-	return s.postRepo.FindByID(ctx, id)
+	return s.getPost(ctx, id)
 }
 
 func (s *postService) Delete(ctx context.Context, userID, id int) error {
@@ -88,7 +244,22 @@ func (s *postService) Delete(ctx context.Context, userID, id int) error {
 	if post.UserID != userID {
 		return ErrPostForbidden
 	}
-	return s.postRepo.Delete(ctx, id)
+
+	media, err := s.postMediaRepo.ListByPost(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := s.postRepo.Delete(ctx, id); err != nil {
+		return err
+	}
+
+	// Best-effort removal of the underlying objects; post_media rows are
+	// removed by the ON DELETE CASCADE on the post.
+	if s.storage != nil {
+		s.cleanupUploaded(ctx, media)
+	}
+	return nil
 }
 
 type CommentService interface {

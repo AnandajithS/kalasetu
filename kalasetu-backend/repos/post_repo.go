@@ -28,7 +28,7 @@ func NewPostRepository(db *sql.DB) PostRepository {
 
 const postSelectColumns = `
 	p.id, p.user_id, COALESCE(u.name, ''), p.content,
-	p.media_type, p.media_uri, p.category_id, COALESCE(cat.category_name, ''),
+	p.category_id, COALESCE(cat.category_name, ''),
 	(SELECT COUNT(*) FROM likes l WHERE l.parent_type = 'post' AND l.parent_id = p.id),
 	(SELECT COUNT(*) FROM comments cm WHERE cm.parent_type = 'post' AND cm.parent_id = p.id),
 	p.created_at
@@ -36,13 +36,13 @@ const postSelectColumns = `
 
 func (r *postRepository) Create(ctx context.Context, post *models.Post) (*models.Post, error) {
 	query := `
-		INSERT INTO posts (user_id, content, media_type, media_uri, category_id)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO posts (user_id, content, category_id)
+		VALUES ($1, $2, $3)
 		RETURNING id, created_at
 	`
 	err := r.db.QueryRowContext(
 		ctx, query,
-		post.UserID, post.Content, post.MediaType, post.MediaURI, post.CategoryID,
+		post.UserID, post.Content, post.CategoryID,
 	).Scan(&post.ID, &post.CreatedAt)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (r *postRepository) FindByID(ctx context.Context, id int) (*models.Post, er
 	post := &models.Post{}
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&post.ID, &post.UserID, &post.UserName, &post.Content,
-		&post.MediaType, &post.MediaURI, &post.CategoryID, &post.CategoryName,
+		&post.CategoryID, &post.CategoryName,
 		&post.LikeCount, &post.CommentCount, &post.CreatedAt,
 	)
 	if err != nil {
@@ -92,7 +92,7 @@ func (r *postRepository) List(ctx context.Context) ([]models.Post, error) {
 		var p models.Post
 		if err := rows.Scan(
 			&p.ID, &p.UserID, &p.UserName, &p.Content,
-			&p.MediaType, &p.MediaURI, &p.CategoryID, &p.CategoryName,
+			&p.CategoryID, &p.CategoryName,
 			&p.LikeCount, &p.CommentCount, &p.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -107,12 +107,10 @@ func (r *postRepository) Update(ctx context.Context, id int, input models.Update
 	query := `
 		UPDATE posts
 		SET content     = COALESCE($2, content),
-		    media_type  = COALESCE($3, media_type),
-		    media_uri   = COALESCE($4, media_uri),
-		    category_id = COALESCE($5, category_id)
+		    category_id = COALESCE($3, category_id)
 		WHERE id = $1
 	`
-	_, err := r.db.ExecContext(ctx, query, id, input.Content, input.MediaType, input.MediaURI, input.CategoryID)
+	_, err := r.db.ExecContext(ctx, query, id, input.Content, input.CategoryID)
 	return err
 }
 

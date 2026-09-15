@@ -2,6 +2,10 @@
 
 package model
 
+import (
+	"github.com/99designs/gqlgen/graphql"
+)
+
 type Application struct {
 	ID            string `json:"id"`
 	OpportunityID string `json:"opportunityId"`
@@ -42,10 +46,9 @@ type CreateEventInput struct {
 }
 
 type CreatePostInput struct {
-	Content    string  `json:"content"`
-	MediaType  *string `json:"mediaType,omitempty"`
-	MediaURI   *string `json:"mediaUri,omitempty"`
-	CategoryID *string `json:"categoryId,omitempty"`
+	Content    string            `json:"content"`
+	Media      []*graphql.Upload `json:"media,omitempty"`
+	CategoryID *string           `json:"categoryId,omitempty"`
 }
 
 type Event struct {
@@ -71,17 +74,25 @@ type OnboardingInput struct {
 }
 
 type Post struct {
-	ID           string  `json:"id"`
-	UserID       string  `json:"userId"`
-	UserName     string  `json:"userName"`
-	Content      string  `json:"content"`
-	MediaType    *string `json:"mediaType,omitempty"`
-	MediaURI     *string `json:"mediaUri,omitempty"`
-	CategoryID   *string `json:"categoryId,omitempty"`
-	CategoryName *string `json:"categoryName,omitempty"`
-	LikeCount    int32   `json:"likeCount"`
-	CommentCount int32   `json:"commentCount"`
-	CreatedAt    string  `json:"createdAt"`
+	ID           string       `json:"id"`
+	UserID       string       `json:"userId"`
+	UserName     string       `json:"userName"`
+	Content      string       `json:"content"`
+	Media        []*PostMedia `json:"media"`
+	CategoryID   *string      `json:"categoryId,omitempty"`
+	CategoryName *string      `json:"categoryName,omitempty"`
+	LikeCount    int32        `json:"likeCount"`
+	CommentCount int32        `json:"commentCount"`
+	CreatedAt    string       `json:"createdAt"`
+}
+
+type PostMedia struct {
+	ID        string `json:"id"`
+	PostID    string `json:"postId"`
+	URL       string `json:"url"`
+	MediaType string `json:"mediaType"`
+	SortOrder int32  `json:"sortOrder"`
+	CreatedAt string `json:"createdAt"`
 }
 
 type Query struct {
@@ -99,7 +110,5 @@ type UpdateEventInput struct {
 
 type UpdatePostInput struct {
 	Content    *string `json:"content,omitempty"`
-	MediaType  *string `json:"mediaType,omitempty"`
-	MediaURI   *string `json:"mediaUri,omitempty"`
 	CategoryID *string `json:"categoryId,omitempty"`
 }
