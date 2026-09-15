@@ -62,9 +62,11 @@ func (r *profileRepository) CountArtworks(ctx context.Context, userID int) (int,
 
 func (r *profileRepository) ListArtworkImages(ctx context.Context, userID int) ([]string, error) {
 	query := `
-		SELECT media_uri FROM posts
-		WHERE user_id = $1 AND media_uri IS NOT NULL AND media_uri <> ''
-		ORDER BY created_at DESC
+		SELECT pm.object_key
+		FROM post_media pm
+		JOIN posts p ON p.id = pm.post_id
+		WHERE p.user_id = $1
+		ORDER BY pm.sort_order ASC, pm.id DESC
 	`
 	rows, err := r.db.QueryContext(ctx, query, userID)
 	if err != nil {
@@ -99,13 +101,15 @@ func (r *profileRepository) CountTotalLikes(ctx context.Context, userID int) (in
 
 func (r *profileRepository) ListRecentPosts(ctx context.Context, userID int, limit int) ([]models.ProfilePost, error) {
 	query := `
-		SELECT p.id, p.content, COALESCE(p.media_type, ''), COALESCE(p.media_uri, ''),
+		SELECT p.id, p.content,
+		       COALESCE((SELECT pm.media_type FROM post_media pm WHERE pm.post_id = p.id ORDER BY pm.sort_order ASC LIMIT 1), ''),
+		       COALESCE((SELECT pm.object_key  FROM post_media pm WHERE pm.post_id = p.id ORDER BY pm.sort_order ASC LIMIT 1), ''),
 		       p.created_at,
 		       (SELECT COUNT(*) FROM likes    l WHERE l.parent_type = 'post' AND l.parent_id = p.id) AS like_count,
 		       (SELECT COUNT(*) FROM comments c WHERE c.parent_type = 'post' AND c.parent_id = p.id) AS comment_count
 		FROM posts p
 		WHERE p.user_id = $1
-		ORDER BY p.created_at DESC
+		ORDER BY p.created_at DESC, p.id DESC
 		LIMIT $2
 	`
 	rows, err := r.db.QueryContext(ctx, query, userID, limit)

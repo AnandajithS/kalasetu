@@ -5,6 +5,7 @@ import (
 	"errors"
 	"kalasetu/models"
 	"kalasetu/repos"
+	"kalasetu/storage"
 )
 
 var ErrProfileNotFound = errors.New("profile not found")
@@ -17,10 +18,14 @@ type ProfileService interface {
 
 type profileService struct {
 	profileRepo repos.ProfileRepository
+	storage     storage.ObjectStorage
 }
 
-func NewProfileService(profileRepo repos.ProfileRepository) ProfileService {
-	return &profileService{profileRepo: profileRepo}
+func NewProfileService(profileRepo repos.ProfileRepository, objectStorage storage.ObjectStorage) ProfileService {
+	return &profileService{
+		profileRepo: profileRepo,
+		storage:     objectStorage,
+	}
 }
 
 func (s *profileService) GetProfile(ctx context.Context, userID int) (*models.Profile, error) {
@@ -37,9 +42,21 @@ func (s *profileService) GetProfile(ctx context.Context, userID int) (*models.Pr
 		return nil, err
 	}
 
-	profile.ArtworksImages, err = s.profileRepo.ListArtworkImages(ctx, userID)
+	artworksKeys, err := s.profileRepo.ListArtworkImages(ctx, userID)
 	if err != nil {
 		return nil, err
+	}
+
+	profile.ArtworksImages = make([]string, 0, len(artworksKeys))
+	for _, key := range artworksKeys {
+		if key != "" && s.storage != nil {
+			url, err := s.storage.GetURL(ctx, key)
+			if err == nil {
+				profile.ArtworksImages = append(profile.ArtworksImages, url)
+				continue
+			}
+		}
+		profile.ArtworksImages = append(profile.ArtworksImages, key)
 	}
 
 	profile.TotalLikes, err = s.profileRepo.CountTotalLikes(ctx, userID)
@@ -47,10 +64,21 @@ func (s *profileService) GetProfile(ctx context.Context, userID int) (*models.Pr
 		return nil, err
 	}
 
-	profile.RecentPosts, err = s.profileRepo.ListRecentPosts(ctx, userID, defaultRecentPostsLimit)
+	recentPosts, err := s.profileRepo.ListRecentPosts(ctx, userID, defaultRecentPostsLimit)
 	if err != nil {
 		return nil, err
 	}
+
+	if s.storage != nil {
+		for i := range recentPosts {
+			if recentPosts[i].MediaURI != "" {
+				if url, err := s.storage.GetURL(ctx, recentPosts[i].MediaURI); err == nil {
+					recentPosts[i].MediaURI = url
+				}
+			}
+		}
+	}
+	profile.RecentPosts = recentPosts
 
 	profile.Followers = 0
 	profile.Following = 0
