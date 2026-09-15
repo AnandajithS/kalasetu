@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 fun ProfileScreen(
     presenter: ProfilePresenter,
     userId: String,
+    posts: List<DraftPost>,
     onEditProfile: () -> Unit = {},
     onShare: () -> Unit = {},
     onBack: () -> Unit = {},
@@ -75,6 +76,7 @@ fun ProfileScreen(
         uiState.profile != null -> {
             ProfileContent(
                 profile = uiState.profile!!,
+                posts = posts,
                 selectedTab = uiState.selectedTab,
                 onTabSelected = { tab ->
                     uiState = uiState.copy(selectedTab = tab)
@@ -91,6 +93,7 @@ fun ProfileScreen(
 private fun ProfileContent(
     profile: Profile,
     selectedTab: ProfileTab,
+    posts: List<DraftPost>,
     onTabSelected: (ProfileTab) -> Unit,
     onEditProfile: () -> Unit,
     onShare: () -> Unit,
@@ -128,7 +131,10 @@ private fun ProfileContent(
 
         when (selectedTab) {
             ProfileTab.POSTS ->
-                PostsTabContent(profile)
+                PostsTabContent(
+                    profile = profile,
+                    posts = posts
+                )
 
             ProfileTab.SKILLS ->
                 SkillsTabContent(profile.skills)

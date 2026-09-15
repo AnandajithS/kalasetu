@@ -5,6 +5,10 @@ import androidx.compose.runtime.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.ui.unit.dp
 import com.example.kalasetu.features.auth.*
 import com.example.kalasetu.features.feed.FeedScreen
@@ -39,6 +43,7 @@ fun App() {
     var userLocation by remember { mutableStateOf("") }
     var currentProfile by remember { mutableStateOf<Profile?>(null) }
     var draftEvent by remember { mutableStateOf(EventDraft()) }
+    var publishedPosts by remember { mutableStateOf<List<DraftPost>>(emptyList()) }
     val sharedEventListViewModel: EventListViewModel = viewModel()
     val eventRepository = remember { EventRepository() }
     var onboardingData by remember { mutableStateOf(OnboardingData()) }
@@ -61,14 +66,29 @@ fun App() {
                     userEmail = currentProfile?.email ?: userEmail,
                     userAvatarUrl = currentProfile?.avatarUrl,
                     userAvatarBytes = currentProfile?.avatarBytes,
+
+
+                    currentRoute = when (screen) {
+                        Screen.Feed -> "Dashboard"
+                        Screen.Store -> "Store"
+                        is Screen.Profile -> "Profile"
+                        is Screen.ArtistHome -> "Events"
+                        is Screen.MyApplications -> "Applications"
+                        is Screen.OrganizerHome -> "MyEvents"
+                        else -> ""
+                    },
+
                     onClose = { scope.launch { drawerState.close() } },
+
                     onNavigate = { route ->
                         scope.launch { drawerState.close() }
+
                         when (route) {
                             "Profile" -> screen = Screen.Profile(userId = "123")
                             "Store" -> screen = Screen.Store
                             "Dashboard" -> screen = Screen.Feed
                             "Events" -> screen = Screen.ArtistHome(userId = "123")
+                            "MyEvents" -> screen = Screen.OrganizerHome(userId = "123")
                             "Applications" -> screen = Screen.MyApplications(userId = "123")
                         }
                     }
@@ -94,7 +114,22 @@ fun App() {
                         }
                     }
                 )
-
+                is Screen.OrganizerEventList -> OrganizerHomeScreen(
+                    userId = currentScreen.userId,
+                    viewModel = sharedEventListViewModel,
+                    onCreateEvent = {
+                        draftEvent = EventDraft()
+                        screen = Screen.CreateEvent
+                    },
+                    onMenuClick = {
+                        scope.launch {
+                            drawerState.open()
+                        }
+                    },
+                    onEventClick = { eventId ->
+                        screen = Screen.EventApplications(eventId)
+                    },
+                )
                 Screen.Store -> {
                     BackHandler { screen = Screen.Feed }
                     Scaffold(
@@ -185,7 +220,7 @@ fun App() {
 
                             println("========== APP LOGIN SUCCESS ==========")
 
-                            screen = Screen.OrganizerHome(userId = "123")
+                            screen = Screen.Feed
 
                         } else {
 
@@ -242,6 +277,7 @@ fun App() {
                 OnboardingDoneScreen(
                     onFinish = {
                         scope.launch {
+                            screen = Screen.Feed
                             val response = onboardingRepository.onboardUser(
                                 name = onboardingData.name,
                                 role = onboardingData.role,
@@ -255,7 +291,7 @@ fun App() {
                                 response.errors.isNullOrEmpty() &&
                                 response.data?.onboardUser == true
                             ) {
-                                screen = Screen.Feed
+
                             } else {
                                 println("ONBOARDING FAILED: ${response.errors}")
                             }
@@ -285,6 +321,16 @@ fun App() {
                                 onHomeClick = { screen = Screen.Feed },
                                 onProfileClick = { screen = Screen.Profile(userId = "123") }
                             )
+                        },
+                        floatingActionButton = {
+                            FloatingActionButton(
+                                onClick = { screen = Screen.UploadPost },
+                                containerColor = BrandPurple,
+                                contentColor = Color.White,
+                                shape = CircleShape
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Add Post")
+                            }
                         }
                     ) { innerPadding ->
                         Box(modifier = Modifier.padding(innerPadding)) {
@@ -293,10 +339,49 @@ fun App() {
                                 userId = currentScreen.userId,
                                 onEditProfile = { screen = Screen.EditProfile(currentScreen.userId) },
                                 onShare = { /* Handle share */ },
+                                posts = publishedPosts,
                                 onBack = { screen = Screen.Feed }
                             )
                         }
                     }
+                }
+
+                Screen.UploadPost -> {
+                    UploadPostScreen(
+                        onDone = { desc, imgs ->
+                            screen = Screen.PostPreview(
+                                description = desc,
+                                imageBytes = imgs,
+                                userName = currentProfile?.name ?: userName,
+                                userAvatarUrl = currentProfile?.avatarUrl,
+                                userAvatarBytes = currentProfile?.avatarBytes
+                            )
+                        },
+                        onBack = { screen = Screen.Profile(userId = "123") }
+                    )
+                }
+
+                is Screen.PostPreview -> {
+                    PostPreviewScreen(
+                        description = currentScreen.description,
+                        imageBytes = currentScreen.imageBytes,
+                        userName = currentScreen.userName,
+                        userAvatarUrl = currentScreen.userAvatarUrl,
+                        userAvatarBytes = currentScreen.userAvatarBytes,
+                        onPublish = {
+                            publishedPosts = publishedPosts + DraftPost(
+                                timeAgo = "Just now",
+                                content = currentScreen.description,
+                                likes = 0,
+                                comments = 0,
+                                hasImage = currentScreen.imageBytes.isNotEmpty(),
+                                imageBytes = currentScreen.imageBytes
+                            )
+
+                            screen = Screen.Profile(userId = "123")
+                        },
+                        onBack = { screen = Screen.UploadPost }
+                    )
                 }
                 is Screen.EditProfile -> {
                     BackHandler { screen = Screen.Profile(userId = currentScreen.userId) }
@@ -322,8 +407,17 @@ fun App() {
                 // Artist Flow
                 is Screen.ArtistHome -> ArtistHomeScreen(
                     viewModel = sharedEventListViewModel,
-                    onEventClick = { eventId -> screen = Screen.EventDetails(eventId) },
-                    onSwitchRole = { screen = Screen.OrganizerHome(userId = "123") },
+                    onEventClick = { eventId ->
+                        screen = Screen.EventDetails(eventId)
+                    },
+                    onSwitchRole = {
+                        screen = Screen.OrganizerHome(userId = "123")
+                    },
+                    onMenuClick = {
+                        scope.launch {
+                            drawerState.open()
+                        }
+                    }
                 )
 
                 is Screen.EventDetails -> EventDetailsScreen(
@@ -359,22 +453,47 @@ fun App() {
                     )
                 }
 
-                is Screen.MyApplications -> MyApplicationsScreen(
-                    onApplicationClick = { appId -> screen = Screen.ApplicationStatus(appId) },
-                    onBack = { screen = Screen.ArtistHome(userId = "123") },
-                    onSwitchRole = { screen = Screen.OrganizerHome(userId = "123") },
-                )
+                is Screen.MyApplications -> {
+                    BackHandler { screen = Screen.Feed }
+
+                    MyApplicationsScreen(
+                        onApplicationClick = { appId ->
+                            screen = Screen.ApplicationStatus(appId)
+                        },
+                        onBack = {
+                            screen = Screen.Feed
+                        },
+                        onSwitchRole = {
+                            screen = Screen.OrganizerHome(userId = "123")
+                        },
+                        onMenuClick = {
+                            scope.launch {
+                                drawerState.open()
+                            }
+                        }
+                    )
+                }
 
                 // ─── Organizer Flow ───
                 is Screen.OrganizerHome -> OrganizerHomeScreen(
                     userId = currentScreen.userId,
                     viewModel = sharedEventListViewModel,
+
                     onCreateEvent = {
                         draftEvent = EventDraft()
                         screen = Screen.CreateEvent
                     },
-                    onEventClick = { eventId -> screen = Screen.EventApplications(eventId) },
-                    onSwitchRole = { screen = Screen.ArtistHome(userId = "123") },
+
+                    onMenuClick = {
+                        scope.launch {
+                            drawerState.open()
+                        }
+                    },
+
+                    onEventClick = { eventId ->
+                        screen = Screen.EventApplications(eventId)
+                    },
+
                 )
 
                 Screen.CreateEvent -> CreateEventScreen(
@@ -462,17 +581,6 @@ fun App() {
                     }
                 },
             )
-
-                is Screen.OrganizerEventList -> OrganizerHomeScreen(
-                    userId = currentScreen.userId,
-                    viewModel = sharedEventListViewModel,
-                    onCreateEvent = {
-                        draftEvent = EventDraft()
-                        screen = Screen.CreateEvent
-                    },
-                    onEventClick = { eventId -> screen = Screen.EventApplications(eventId) },
-                    onSwitchRole = { screen = Screen.ArtistHome(userId = "123") },
-                )
 
                 // ─── Event Applications (Organizer) ───
                 is Screen.EventApplications -> {
