@@ -1,5 +1,7 @@
 package com.example.kalasetu.features.feed
-
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,15 +18,16 @@ import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import coil3.compose.AsyncImage
 import com.example.kalasetu.features.profile.toInitials
 import com.example.kalasetu.theme.KalasetuTheme
@@ -88,87 +91,72 @@ fun FeedScreen(
     userAvatarUrl: String? = null,
     userAvatarBytes: ByteArray? = null,
     userName: String? = null,
-    userEmail: String? = null,
     onNavigateToProfile: () -> Unit = {},
     onNavigateToStore: () -> Unit = {},
-    onNavigateToHome: () -> Unit = {}
+    onNavigateToHome: () -> Unit = {},
+    onMenuClick: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("FEED", "DISCOVER", "NEW", "HYPED")
-    
     var showComments by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState()
-    
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            SidebarContent(
+    val commentsSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            KalaTopBar(
+                avatarUrl = userAvatarUrl,
+                avatarBytes = userAvatarBytes,
                 userName = userName,
-                userEmail = userEmail,
-                userAvatarUrl = userAvatarUrl,
-                userAvatarBytes = userAvatarBytes,
-                onClose = { scope.launch { drawerState.close() } },
-                onNavigate = { route ->
-                    scope.launch { drawerState.close() }
-                    when (route) {
-                        "Profile" -> onNavigateToProfile()
-                        "Store" -> onNavigateToStore()
-                        "Dashboard" -> onNavigateToHome()
-                    }
-                }
+                onProfileClick = onNavigateToProfile,
+                onMenuClick = onMenuClick
+            )
+        },
+        bottomBar = {
+            KalaBottomNav(
+                selectedIndex = 1,
+                onHomeClick = onNavigateToHome,
+                onStoreClick = onNavigateToStore,
+                onProfileClick = onNavigateToProfile
             )
         }
-    ) {
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.background,
-            topBar = {
-                KalaTopBar(
-                    avatarUrl = userAvatarUrl,
-                    avatarBytes = userAvatarBytes,
-                    userName = userName,
-                    onProfileClick = onNavigateToProfile,
-                    onMenuClick = { scope.launch { drawerState.open() } }
-                )
-            },
-            bottomBar = {
-                KalaBottomNav(
-                    onHomeClick = onNavigateToHome,
-                    onStoreClick = onNavigateToStore,
-                    onProfileClick = onNavigateToProfile
-                )
-            }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                KalaTabRow(
-                    tabs = tabs,
-                    selectedIndex = selectedTab,
-                    onTabSelected = { selectedTab = it }
-                )
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            KalaTabRow(
+                tabs = tabs,
+                selectedIndex = selectedTab,
+                onTabSelected = { selectedTab = it }
+            )
 
-                when (selectedTab) {
-                    0 -> FeedContent(onCommentClick = { showComments = true })
-                    1 -> DiscoverContent()
-                    else -> {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Content for ${tabs[selectedTab]}")
-                        }
+            when (selectedTab) {
+                0 -> FeedContent(
+                    onCommentClick = {
+                        showComments = true
+                    }
+                )
+                1 -> DiscoverContent()
+                else -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Content for ${tabs[selectedTab]}")
                     }
                 }
             }
+        }
 
-            if (showComments) {
-                CommentsBottomSheet(
-                    onDismissRequest = { showComments = false },
-                    sheetState = sheetState
-                )
-            }
+        if (showComments) {
+            CommentsBottomSheet(
+                onDismissRequest = {
+                    showComments = false
+                },
+                sheetState = commentsSheetState
+            )
         }
     }
 }
@@ -403,28 +391,34 @@ private fun PostCard(post: ArtistPost, onCommentClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ImageCarousel(images: List<String>) {
-    var currentIndex by remember { mutableIntStateOf(0) }
 
-    Box {
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp)
-        ) {
-            items(images) { url ->
-                AsyncImage(
-                    model = url,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillParentMaxWidth()
-                        .fillMaxHeight()
-                )
-            }
+    val pagerState = rememberPagerState(
+        pageCount = { images.size }
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(220.dp)
+    ) {
+
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+
+            AsyncImage(
+                model = images[page],
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
+        // Dots
         if (images.size > 1) {
             Row(
                 modifier = Modifier
@@ -438,48 +432,14 @@ private fun ImageCarousel(images: List<String>) {
                             .size(6.dp)
                             .clip(CircleShape)
                             .background(
-                                if (index == currentIndex) SelectedPurple
-                                else Color.White.copy(alpha = 0.6f)
+                                if (index == pagerState.currentPage)
+                                    SelectedPurple
+                                else
+                                    Color.White.copy(alpha = 0.6f)
                             )
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-internal fun KalaBottomNav(
-    onStoreClick: () -> Unit,
-    onHomeClick: () -> Unit,
-    onProfileClick: () -> Unit
-) {
-    var selected by remember { mutableIntStateOf(1) }
-    val items = listOf(
-        Icons.Filled.Storefront,
-        Icons.Filled.Home,
-        Icons.Outlined.Person
-    )
-
-    NavigationBar(containerColor = Color.White) {
-        items.forEachIndexed { index, icon ->
-            NavigationBarItem(
-                selected = selected == index,
-                onClick = {
-                    selected = index
-                    when (index) {
-                        0 -> onStoreClick()
-                        1 -> onHomeClick()
-                        2 -> onProfileClick()
-                    }
-                },
-                icon = { Icon(icon, contentDescription = null) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color.White,
-                    indicatorColor = SelectedPurple,
-                    unselectedIconColor = SubtitleGray
-                )
-            )
         }
     }
 }

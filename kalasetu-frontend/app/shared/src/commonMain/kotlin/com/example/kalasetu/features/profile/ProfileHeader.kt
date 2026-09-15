@@ -53,11 +53,8 @@ fun ProfileHeader(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(110.dp)
-                .background(
-                    brush = Brush.linearGradient(
-                        listOf(LightPurple, BrandPurple),
+                .background(LightPurple
                     ),
-                ),
         )
 
         IconButton(

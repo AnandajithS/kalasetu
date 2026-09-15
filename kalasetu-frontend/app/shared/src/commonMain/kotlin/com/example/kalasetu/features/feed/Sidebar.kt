@@ -47,16 +47,6 @@ fun SidebarContent(
                 .padding(20.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Close Button
-            IconButton(
-                onClick = onClose,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .size(32.dp)
-                    .border(1.dp, Color.LightGray, CircleShape)
-            ) {
-                Icon(Icons.Default.Close, contentDescription = "Close", modifier = Modifier.size(16.dp))
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
