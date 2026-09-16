@@ -44,13 +44,12 @@ import kotlin.time.Clock
 
 object RelativeTime {
     fun format(createdAt: String): String = try {
-        val now = Clock.System.now()
-        val diff = now - Instant.parse(createdAt)
+        val diffMinutes = (Clock.System.now().toEpochMilliseconds() - Instant.parse(createdAt).toEpochMilliseconds()) / 60_000L
         when {
-            diff.inWholeMinutes < 1 -> "Just now"
-            diff.inWholeMinutes < 60 -> "${diff.inWholeMinutes}m ago"
-            diff.inWholeHours < 24 -> "${diff.inWholeHours}h ago"
-            else -> "${diff.inWholeDays}d ago"
+            diffMinutes < 1 -> "Just now"
+            diffMinutes < 60 -> "${diffMinutes}m ago"
+            diffMinutes < 24 * 60 -> "${diffMinutes / 60}h ago"
+            else -> "${diffMinutes / (24 * 60)}d ago"
         }
     } catch (e: Exception) {
         "Just now"
