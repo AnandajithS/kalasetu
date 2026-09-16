@@ -31,7 +31,9 @@ import com.example.kalasetu.features.event.Event
 import com.example.kalasetu.features.opportunity.Opportunity
 import com.example.kalasetu.features.opportunity.OpportunityStatus
 import com.example.kalasetu.features.opportunity.OpportunityStore
-import kotlinx.datetime.*
+import kotlin.time.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.daysUntil
 
 private val PurplePrimary = Color(0xFF7466F1)
 private val LightPurpleBg = Color(0xFFF4F1FF)
@@ -560,8 +562,7 @@ private fun AddAnotherOpportunityButton(onClick: () -> Unit) {
 
 private fun formatRemaining(endDate: LocalDate?): String {
     if (endDate == null) return "—"
-    val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    val days = today.daysUntil(endDate)
+    val days = (endDate.toEpochDays() - (Clock.System.now().toEpochMilliseconds() / 86_400_000L)).toInt()
     return if (days > 0) "${days}d" else "Ends today"
 }
 
