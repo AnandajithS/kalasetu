@@ -1,5 +1,6 @@
 package com.example.kalasetu.features.feed
 
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -43,15 +44,19 @@ val dummyComments = listOf(
     Comment(1, "John Doe", "https://i.pravatar.cc/150?img=12", "Lorem ipsum dolor lorem ipsum akjbd kajkjas jbkhb", "2h", 231, true, 23),
     Comment(2, "John Doe", "https://i.pravatar.cc/150?img=12", "Lorem ipsum dolor lorem ipsum akjbd kajkjas jbkhb", "2h", 231, false, 23),
     Comment(3, "John Doe", "https://i.pravatar.cc/150?img=12", "Lorem ipsum dolor lorem ipsum akjbd kajkjas jbkhb", "2h", 231, true, 23),
-    Comment(4, "John Doe", "https://i.pravatar.cc/150?img=12", "Lorem ipsum dolor lorem ipsum akjbd kajkjas jbkhb", "2h", 231, true, 23),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommentsBottomSheet(
+    postId: Int,
+    commentsList: List<Comment>,
+    onSendComment: (String) -> Unit,
     onDismissRequest: () -> Unit,
     sheetState: SheetState
 ) {
+    var mainComment by remember { mutableStateOf("") }
+
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
@@ -73,7 +78,7 @@ fun CommentsBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "2.3k",
+                    text = "${commentsList.size}",
                     color = Color.Gray,
                     fontSize = 14.sp,
                     modifier = Modifier.width(48.dp)
@@ -94,46 +99,69 @@ fun CommentsBottomSheet(
             HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 1.dp)
 
             // Comments List
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                items(dummyComments) { comment ->
-                    CommentItem(comment)
+            if (commentsList.isEmpty()) {
+                Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Text("No comments yet. Be the first to comment!", color = Color.Gray, fontSize = 14.sp)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    items(commentsList) { comment ->
+                        CommentItem(comment)
+                    }
                 }
             }
 
             // Bottom Input
-            var mainComment by remember { mutableStateOf("") }
-            TextField(
-                value = mainComment,
-                onValueChange = { mainComment = it },
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .height(52.dp),
-                placeholder = {
-                    Text(
-                        text = "Join the conversation...",
-                        color = Color.Gray,
-                        fontSize = 14.sp
-                    )
-                },
-                shape = RoundedCornerShape(26.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFF5F5F5),
-                    unfocusedContainerColor = Color(0xFFF5F5F5),
-                    disabledContainerColor = Color(0xFFF5F5F5),
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    cursorColor = Color.Black
-                ),
-                singleLine = true
-            )
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextField(
+                    value = mainComment,
+                    onValueChange = { mainComment = it },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                    placeholder = {
+                        Text(
+                            text = "Add a comment...",
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                    },
+                    shape = RoundedCornerShape(26.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFFF5F5F5),
+                        unfocusedContainerColor = Color(0xFFF5F5F5),
+                        disabledContainerColor = Color(0xFFF5F5F5),
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent,
+                        cursorColor = Color.Black
+                    ),
+                    singleLine = true
+                )
+                Spacer(Modifier.width(8.dp))
+                IconButton(
+                    onClick = {
+                        if (mainComment.isNotBlank()) {
+                            onSendComment(mainComment.trim())
+                            mainComment = ""
+                        }
+                    },
+                    modifier = Modifier.size(44.dp).clip(CircleShape).background(Color(0xFF7466F1))
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = Color.White, modifier = Modifier.size(20.dp))
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
@@ -146,6 +174,9 @@ private fun CommentsBottomSheetPreview() {
     val sheetState = rememberModalBottomSheetState()
     KalasetuTheme {
         CommentsBottomSheet(
+            postId = 1,
+            commentsList = dummyComments,
+            onSendComment = {},
             onDismissRequest = {},
             sheetState = sheetState
         )

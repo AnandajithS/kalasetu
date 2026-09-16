@@ -1,10 +1,5 @@
 # GraphQL schema
-#
-# https://gqlgen.com/getting-started/
 
-# Upload is built in to gqlgen (github.com/99designs/gqlgen/graphql.Upload).
-# It is declared here so schema validation passes; file uploads arrive via the
-# GraphQL multipart request transport.
 scalar Upload
 
 type Query {
@@ -15,6 +10,9 @@ type Query {
   application(id: ID!): Application
   myApplications: [Application!]!
   applicationsByOpportunity(opportunityId: ID!): [Application!]!
+  applicationsByEvent(eventId: ID!): [Application!]!
+  opportunitiesByEvent(eventId: ID!): [Opportunity!]!
+  opportunity(id: ID!): Opportunity
   profile(userId: ID!): Profile!
 }
 
@@ -65,16 +63,18 @@ type Mutation {
   onboardUser(input: OnboardingInput!): Boolean!
   submitApplication(input: CreateApplicationInput!): Application!
   updateApplicationStatus(id: ID!, status: String!): Boolean!
+  createOpportunity(input: CreateOpportunityInput!): Opportunity!
+  updateOpportunity(id: ID!, input: UpdateOpportunityInput!): Opportunity!
 }
 
 type Event {
   id: ID!
   name: String!
-  startDate: String! # "2006-01-02"
-  duration: String! # Postgres interval literal, e.g. "2 days"
+  startDate: String!
+  duration: String!
   hostId: ID
   hostName: String
-  createdAt: String! # RFC3339
+  createdAt: String!
 }
 
 input CreateEventInput {
@@ -174,16 +174,65 @@ extend type Query {
   commentsOfPost(id: ID!): [Comment!]!
 }
 
+type Opportunity {
+    id: ID!
+    eventId: ID!
+    title: String!
+    description: String
+    categories: [String!]!
+    location: String
+    startDate: String
+    endDate: String
+    totalPositions: Int!
+    openSlots: Int!
+    applicationsCount: Int!
+    status: String!
+    createdAt: String!
+}
+
+input CreateOpportunityInput {
+    eventId: ID!
+    title: String!
+    description: String
+    categories: [String!]
+    location: String
+    startDate: String
+    endDate: String
+    totalPositions: Int
+    status: String
+}
+
+input UpdateOpportunityInput {
+    title: String
+    description: String
+    categories: [String!]
+    location: String
+    startDate: String
+    endDate: String
+    totalPositions: Int
+    status: String
+}
+
 type Application {
-  id: ID!
-  opportunityId: ID!
-  applierId: ID!
-  resumeUrl: String!
-  status: String!
-  createdAt: String!
+    id: ID!
+    opportunityId: ID
+    eventId: ID!
+    applierId: ID!
+    applicantName: String
+    applicantEmail: String
+    applicantPhone: String
+    description: String
+    resumeUrl: String
+    status: String!
+    createdAt: String!
 }
 
 input CreateApplicationInput {
-  opportunityId: ID!
-  resumeUrl: String!
+    opportunityId: ID
+    eventId: ID!
+    applicantName: String
+    applicantEmail: String
+    applicantPhone: String
+    description: String
+    resumeUrl: String
 }

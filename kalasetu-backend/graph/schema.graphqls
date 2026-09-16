@@ -15,6 +15,9 @@ type Query {
   application(id: ID!): Application
   myApplications: [Application!]!
   applicationsByOpportunity(opportunityId: ID!): [Application!]!
+  applicationsByEvent(eventId: ID!): [Application!]!
+  opportunitiesByEvent(eventId: ID!): [Opportunity!]!
+  opportunity(id: ID!): Opportunity
   profile(userId: ID!): Profile!
 }
 
@@ -65,6 +68,8 @@ type Mutation {
   onboardUser(input: OnboardingInput!): Boolean!
   submitApplication(input: CreateApplicationInput!): Application!
   updateApplicationStatus(id: ID!, status: String!): Boolean!
+  createOpportunity(input: CreateOpportunityInput!): Opportunity!
+  updateOpportunity(id: ID!, input: UpdateOpportunityInput!): Opportunity!
 }
 
 type Event {
@@ -174,16 +179,66 @@ extend type Query {
   commentsOfPost(id: ID!): [Comment!]!
 }
 
+type Opportunity {
+    id: ID!
+    eventId: ID!
+    title: String!
+    description: String
+    categories: [String!]!
+    location: String
+    startDate: String
+    endDate: String
+    totalPositions: Int!
+    openSlots: Int!
+    applicationsCount: Int!
+    status: String!
+    createdAt: String!
+}
+
+input CreateOpportunityInput {
+    eventId: ID!
+    title: String!
+    description: String
+    categories: [String!]
+    location: String
+    startDate: String
+    endDate: String
+    totalPositions: Int
+    status: String
+}
+
+input UpdateOpportunityInput {
+    title: String
+    description: String
+    categories: [String!]
+    location: String
+    startDate: String
+    endDate: String
+    totalPositions: Int
+    status: String
+}
+
 type Application {
     id: ID!
-    opportunityId: ID!
+    opportunityId: ID
+    eventId: ID!
     applierId: ID!
-    resumeUrl: String!
+    applicantName: String
+    applicantEmail: String
+    applicantPhone: String
+    description: String
+    resumeUrl: String
     status: String!
     createdAt: String!
 }
 
 input CreateApplicationInput {
-    opportunityId: ID!
-    resumeUrl: String!
+    opportunityId: ID
+    eventId: ID!
+    applicantName: String
+    applicantEmail: String
+    applicantPhone: String
+    description: String
+    resumeUrl: String
 }
+

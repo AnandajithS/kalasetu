@@ -22,7 +22,11 @@ sealed class Screen {
     // --- Artist Flow ---
     data class ArtistHome(val userId: String) : Screen()
     data class EventDetails(val eventId: String) : Screen()
-    data class ApplicationForm(val eventId: String) : Screen()
+    data class ApplicationForm(
+        val eventId: String,
+        val opportunityId: String = "",
+        val opportunityTitle: String = ""
+    ) : Screen()
 
     data object Feed : Screen()
     data object Store : Screen()
@@ -54,4 +58,5 @@ sealed class Screen {
     data class ApplicationPreview(val applicationId: String) : Screen()
 
     data class CreateOpportunity(val eventId: String) : Screen()
+    data class EditOpportunity(val opportunityId: String, val eventId: String) : Screen()
 }

@@ -29,6 +29,7 @@ import coil3.compose.AsyncImage
 import com.example.kalasetu.core.utils.dashedBorder
 import com.example.kalasetu.features.event.Event
 import com.example.kalasetu.features.opportunity.Opportunity
+import com.example.kalasetu.features.opportunity.OpportunityRepository
 import com.example.kalasetu.features.opportunity.OpportunityStatus
 import com.example.kalasetu.features.opportunity.OpportunityStore
 import kotlin.time.Clock
@@ -58,6 +59,11 @@ fun EventApplicationsScreen(
     onCreateOpportunity: () -> Unit = {},
     onOpportunityClick: (String) -> Unit = {},
 ) {
+    LaunchedEffect(event.id) {
+        ApplicationRepository.fetchApplicationsForEvent(event.id)
+        OpportunityRepository.fetchOpportunitiesForEvent(event.id)
+    }
+
     // Live read from the shared store — updates the moment an artist applies
     val allApps by ApplicationStore.applications.collectAsState()
     val eventApps = remember(allApps, event.id) {
@@ -445,8 +451,10 @@ private fun OpportunityCard(opp: Opportunity, onClick: () -> Unit) {
                     Spacer(Modifier.width(8.dp))
                     StatusBadge(opp.status)
                 }
-                IconButton(onClick = { /* Delete */ }, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = TextGray, modifier = Modifier.size(20.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onClick, modifier = Modifier.size(28.dp)) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit Opportunity", tint = PurplePrimary, modifier = Modifier.size(20.dp))
+                    }
                 }
             }
             

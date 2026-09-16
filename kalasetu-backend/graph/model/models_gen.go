@@ -18,12 +18,17 @@ type Achievement struct {
 }
 
 type Application struct {
-	ID            string `json:"id"`
-	OpportunityID string `json:"opportunityId"`
-	ApplierID     string `json:"applierId"`
-	ResumeURL     string `json:"resumeUrl"`
-	Status        string `json:"status"`
-	CreatedAt     string `json:"createdAt"`
+	ID             string  `json:"id"`
+	OpportunityID  *string `json:"opportunityId,omitempty"`
+	EventID        string  `json:"eventId"`
+	ApplierID      string  `json:"applierId"`
+	ApplicantName  *string `json:"applicantName,omitempty"`
+	ApplicantEmail *string `json:"applicantEmail,omitempty"`
+	ApplicantPhone *string `json:"applicantPhone,omitempty"`
+	Description    *string `json:"description,omitempty"`
+	ResumeURL      *string `json:"resumeUrl,omitempty"`
+	Status         string  `json:"status"`
+	CreatedAt      string  `json:"createdAt"`
 }
 
 type Author struct {
@@ -41,8 +46,13 @@ type Comment struct {
 }
 
 type CreateApplicationInput struct {
-	OpportunityID string `json:"opportunityId"`
-	ResumeURL     string `json:"resumeUrl"`
+	OpportunityID  *string `json:"opportunityId,omitempty"`
+	EventID        string  `json:"eventId"`
+	ApplicantName  *string `json:"applicantName,omitempty"`
+	ApplicantEmail *string `json:"applicantEmail,omitempty"`
+	ApplicantPhone *string `json:"applicantPhone,omitempty"`
+	Description    *string `json:"description,omitempty"`
+	ResumeURL      *string `json:"resumeUrl,omitempty"`
 }
 
 type CreateCommentInput struct {
@@ -54,6 +64,18 @@ type CreateEventInput struct {
 	Name      string `json:"name"`
 	StartDate string `json:"startDate"`
 	Duration  string `json:"duration"`
+}
+
+type CreateOpportunityInput struct {
+	EventID        string   `json:"eventId"`
+	Title          string   `json:"title"`
+	Description    *string  `json:"description,omitempty"`
+	Categories     []string `json:"categories,omitempty"`
+	Location       *string  `json:"location,omitempty"`
+	StartDate      *string  `json:"startDate,omitempty"`
+	EndDate        *string  `json:"endDate,omitempty"`
+	TotalPositions *int32   `json:"totalPositions,omitempty"`
+	Status         *string  `json:"status,omitempty"`
 }
 
 type CreatePostInput struct {
@@ -82,6 +104,22 @@ type OnboardingInput struct {
 	Labels         []string `json:"labels,omitempty"`
 	Bio            *string  `json:"bio,omitempty"`
 	ProfilePicture *string  `json:"profilePicture,omitempty"`
+}
+
+type Opportunity struct {
+	ID                string   `json:"id"`
+	EventID           string   `json:"eventId"`
+	Title             string   `json:"title"`
+	Description       *string  `json:"description,omitempty"`
+	Categories        []string `json:"categories"`
+	Location          *string  `json:"location,omitempty"`
+	StartDate         *string  `json:"startDate,omitempty"`
+	EndDate           *string  `json:"endDate,omitempty"`
+	TotalPositions    int32    `json:"totalPositions"`
+	OpenSlots         int32    `json:"openSlots"`
+	ApplicationsCount int32    `json:"applicationsCount"`
+	Status            string   `json:"status"`
+	CreatedAt         string   `json:"createdAt"`
 }
 
 type Post struct {
@@ -146,6 +184,17 @@ type UpdateEventInput struct {
 	Name      *string `json:"name,omitempty"`
 	StartDate *string `json:"startDate,omitempty"`
 	Duration  *string `json:"duration,omitempty"`
+}
+
+type UpdateOpportunityInput struct {
+	Title          *string  `json:"title,omitempty"`
+	Description    *string  `json:"description,omitempty"`
+	Categories     []string `json:"categories,omitempty"`
+	Location       *string  `json:"location,omitempty"`
+	StartDate      *string  `json:"startDate,omitempty"`
+	EndDate        *string  `json:"endDate,omitempty"`
+	TotalPositions *int32   `json:"totalPositions,omitempty"`
+	Status         *string  `json:"status,omitempty"`
 }
 
 type UpdatePostInput struct {

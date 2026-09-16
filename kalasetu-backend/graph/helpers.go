@@ -8,13 +8,20 @@ import (
 	"kalasetu/middlewares"
 	"kalasetu/models"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 )
 
-// requireUser returns the authenticated user id from the request context,
-// injected by the OptionalJWT middleware, or a GraphQL auth error.
+// optionalUserID returns the authenticated user id from context, or 0 if not authenticated.
+func derefString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
 func requireUser(ctx context.Context) (int, error) {
 	userID, err := middlewares.GetUserIDFromContext(ctx)
 	if err != nil {
@@ -111,13 +118,23 @@ func toGraphApplication(app *models.Application) *model.Application {
 	if app == nil {
 		return nil
 	}
+	var oppID *string
+	if app.OpportunityID != nil && *app.OpportunityID > 0 {
+		str := strconv.Itoa(*app.OpportunityID)
+		oppID = &str
+	}
 	return &model.Application{
-		ID:            strconv.Itoa(app.ID),
-		OpportunityID: strconv.Itoa(app.OpportunityID),
-		ApplierID:     strconv.Itoa(app.ApplierID),
-		ResumeURL:     app.ResumeURL,
-		Status:        app.Status,
-		CreatedAt:     app.CreatedAt.Format(time.RFC3339),
+		ID:             strconv.Itoa(app.ID),
+		OpportunityID:  oppID,
+		EventID:        strconv.Itoa(app.EventID),
+		ApplierID:      strconv.Itoa(app.ApplierID),
+		ApplicantName:  &app.ApplicantName,
+		ApplicantEmail: &app.ApplicantEmail,
+		ApplicantPhone: &app.ApplicantPhone,
+		Description:    &app.Description,
+		ResumeURL:      &app.ResumeURL,
+		Status:         app.Status,
+		CreatedAt:      app.CreatedAt.Format(time.RFC3339),
 	}
 }
 
@@ -126,6 +143,40 @@ func toGraphApplications(apps []models.Application) []*model.Application {
 	for i := range apps {
 		a := apps[i]
 		result = append(result, toGraphApplication(&a))
+	}
+	return result
+}
+
+func toGraphOpportunity(opp *models.Opportunity) *model.Opportunity {
+	if opp == nil {
+		return nil
+	}
+	cats := make([]string, 0)
+	if opp.Categories != "" {
+		cats = strings.Split(opp.Categories, ",")
+	}
+	return &model.Opportunity{
+		ID:                strconv.Itoa(opp.ID),
+		EventID:           strconv.Itoa(opp.EventID),
+		Title:             opp.Title,
+		Description:       &opp.Description,
+		Categories:        cats,
+		Location:          &opp.Location,
+		StartDate:         &opp.StartDate,
+		EndDate:           &opp.EndDate,
+		TotalPositions:    int32(opp.TotalPositions),
+		OpenSlots:         int32(opp.OpenSlots),
+		ApplicationsCount: int32(opp.ApplicationsCount),
+		Status:            opp.Status,
+		CreatedAt:         opp.CreatedAt.Format(time.RFC3339),
+	}
+}
+
+func toGraphOpportunities(opps []models.Opportunity) []*model.Opportunity {
+	result := make([]*model.Opportunity, 0, len(opps))
+	for i := range opps {
+		o := opps[i]
+		result = append(result, toGraphOpportunity(&o))
 	}
 	return result
 }

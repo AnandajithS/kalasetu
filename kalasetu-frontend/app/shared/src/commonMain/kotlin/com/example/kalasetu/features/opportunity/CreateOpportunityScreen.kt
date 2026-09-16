@@ -79,8 +79,9 @@ fun CreateOpportunityScreen(
                 ) {
                     OutlinedButton(
                         onClick = { 
-                            viewModel.submit(eventId, true)
-                            onFinish()
+                            viewModel.submit(eventId, true) {
+                                onFinish()
+                            }
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
@@ -92,8 +93,9 @@ fun CreateOpportunityScreen(
                     }
                     Button(
                         onClick = { 
-                            viewModel.submit(eventId, false)
-                            onFinish()
+                            viewModel.submit(eventId, false) {
+                                onFinish()
+                            }
                         },
                         modifier = Modifier.weight(1.2f),
                         shape = RoundedCornerShape(8.dp),
