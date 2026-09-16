@@ -142,5 +142,6 @@ dependencies {
 apollo {
     service("service") {
         packageName.set("com.example.kalasetu")
+        mapScalar("Upload", "com.apollographql.apollo.api.Upload")
     }
 }

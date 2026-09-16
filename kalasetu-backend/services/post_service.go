@@ -148,13 +148,8 @@ func (s *postService) hydrateMedia(ctx context.Context, post *models.Post) error
 	if err != nil {
 		return err
 	}
-	if s.storage != nil {
-		for i := range media {
-			media[i].URL, err = s.storage.GetURL(ctx, media[i].ObjectKey)
-			if err != nil {
-				return err
-			}
-		}
+	for i := range media {
+		media[i].URL = mediaURL(ctx, s.storage, media[i].ObjectKey)
 	}
 	post.Media = media
 	return nil
@@ -211,13 +206,8 @@ func (s *postService) List(ctx context.Context, currentUserID int, limit, offset
 			posts[i].Media = []models.PostMedia{}
 			continue
 		}
-		if s.storage != nil {
-			for j := range media {
-				media[j].URL, err = s.storage.GetURL(ctx, media[j].ObjectKey)
-				if err != nil {
-					return nil, err
-				}
-			}
+		for j := range media {
+			media[j].URL = mediaURL(ctx, s.storage, media[j].ObjectKey)
 		}
 		posts[i].Media = media
 	}
@@ -249,13 +239,8 @@ func (s *postService) ListByUser(ctx context.Context, authorUserID int, currentU
 			posts[i].Media = []models.PostMedia{}
 			continue
 		}
-		if s.storage != nil {
-			for j := range media {
-				media[j].URL, err = s.storage.GetURL(ctx, media[j].ObjectKey)
-				if err != nil {
-					return nil, err
-				}
-			}
+		for j := range media {
+			media[j].URL = mediaURL(ctx, s.storage, media[j].ObjectKey)
 		}
 		posts[i].Media = media
 	}
