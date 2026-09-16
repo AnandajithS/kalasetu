@@ -1,12 +1,13 @@
 package com.example.kalasetu.features.opportunity
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.datetime.*
-import kotlin.time.Clock
+import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 
 data class CreateOpportunityState(
     val title: String = "",
@@ -15,7 +16,9 @@ data class CreateOpportunityState(
     val startDate: LocalDate? = null,
     val endDate: LocalDate? = null,
     val totalPositions: Int = 1,
-    val description: String = ""
+    val description: String = "",
+    val isSubmitting: Boolean = false,
+    val error: String? = null
 )
 
 class CreateOpportunityViewModel : ViewModel() {
@@ -39,21 +42,25 @@ class CreateOpportunityViewModel : ViewModel() {
         it.copy(startDate = start, endDate = end)
     }
 
-    fun submit(eventId: String, isDraft: Boolean) {
+    fun submit(eventId: String, isDraft: Boolean, onComplete: () -> Unit = {}) {
         val current = _state.value
-        val opp = Opportunity(
-            id = "opp_${Clock.System.now().toEpochMilliseconds()}",
-            eventId = eventId,
-            title = current.title,
-            description = current.description,
-            categories = current.categories,
-            location = current.location,
-            startDate = current.startDate,
-            endDate = current.endDate,
-            totalPositions = current.totalPositions,
-            openSlots = current.totalPositions,
-            status = if (isDraft) OpportunityStatus.DRAFT else OpportunityStatus.ACTIVE
-        )
-        OpportunityStore.addOpportunity(opp)
+        val titleToUse = current.title.ifBlank { "General Opportunity" }
+
+        _state.update { it.copy(isSubmitting = true, error = null) }
+        viewModelScope.launch {
+            val result = OpportunityRepository.createOpportunity(
+                eventId = eventId,
+                title = titleToUse,
+                description = current.description,
+                categories = current.categories,
+                location = current.location,
+                startDate = current.startDate,
+                endDate = current.endDate,
+                totalPositions = current.totalPositions,
+                isDraft = isDraft
+            )
+            _state.update { it.copy(isSubmitting = false) }
+            onComplete()
+        }
     }
 }

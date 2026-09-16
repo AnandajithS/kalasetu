@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 
 data class ArtistPost(
     val id: Int,
+    val userId: Int = 0,
     val artistName: String,
     val craft: String,
     val location: String,
@@ -47,6 +48,8 @@ data class ArtistPost(
     val caption: String,
     val likes: Int,
     val comments: Int,
+    val isLiked: Boolean = false,
+    val isMine: Boolean = false,
     val avatarBackground: Color = Color(0xFFEDE7F6)
 )
 
@@ -98,14 +101,16 @@ fun FeedScreen(
     onMenuClick: () -> Unit = {}
 ) {
     val posts by viewModel.posts.collectAsState()
+    val commentsList by viewModel.comments.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadPosts()
     }
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("FEED", "DISCOVER", "NEW", "HYPED")
+    val tabs = listOf("FEED", "DISCOVER")
     var showComments by remember { mutableStateOf(false) }
+    var activePostIdForComments by remember { mutableStateOf<Int?>(null) }
 
     val commentsSheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -145,7 +150,11 @@ fun FeedScreen(
             when (selectedTab) {
                 0 -> FeedContent(
                     posts = posts,
-                    onCommentClick = {
+                    onLikeClick = { postId -> viewModel.toggleLike(postId) },
+                    onDeleteClick = { postId -> viewModel.deletePost(postId) },
+                    onCommentClick = { postId ->
+                        activePostIdForComments = postId
+                        viewModel.loadComments(postId)
                         showComments = true
                     }
                 )
@@ -158,8 +167,13 @@ fun FeedScreen(
             }
         }
 
-        if (showComments) {
+        if (showComments && activePostIdForComments != null) {
             CommentsBottomSheet(
+                postId = activePostIdForComments!!,
+                commentsList = commentsList,
+                onSendComment = { commentText ->
+                    viewModel.addComment(activePostIdForComments!!, commentText)
+                },
                 onDismissRequest = {
                     showComments = false
                 },
@@ -170,13 +184,23 @@ fun FeedScreen(
 }
 
 @Composable
-internal fun FeedContent(posts: List<ArtistPost>, onCommentClick: () -> Unit) {
+internal fun FeedContent(
+    posts: List<ArtistPost>,
+    onLikeClick: (Int) -> Unit,
+    onDeleteClick: (Int) -> Unit,
+    onCommentClick: (Int) -> Unit
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
-        items(posts) { post ->
-            PostCard(post = post, onCommentClick = onCommentClick)
+        items(posts, key = { it.id }) { post ->
+            PostCard(
+                post = post,
+                onLikeClick = { onLikeClick(post.id) },
+                onDeleteClick = { onDeleteClick(post.id) },
+                onCommentClick = { onCommentClick(post.id) }
+            )
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
@@ -286,10 +310,14 @@ internal fun KalaTabRow(
 }
 
 @Composable
-private fun PostCard(post: ArtistPost, onCommentClick: () -> Unit) {
+private fun PostCard(
+    post: ArtistPost,
+    onLikeClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    onCommentClick: () -> Unit
+) {
     var saved by remember { mutableStateOf(false) }
-    var liked by remember { mutableStateOf(false) }
-    var likeCount by remember { mutableIntStateOf(post.likes) }
+    var showMenu by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -325,8 +353,27 @@ private fun PostCard(post: ArtistPost, onCommentClick: () -> Unit) {
                         color = SubtitleGray
                     )
                 }
-                IconButton(onClick = {  }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                if (post.isMine) {
+                    Box {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Delete Post", color = Color.Red) },
+                                onClick = {
+                                    showMenu = false
+                                    onDeleteClick()
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red)
+                                }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -338,17 +385,14 @@ private fun PostCard(post: ArtistPost, onCommentClick: () -> Unit) {
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = {
-                    liked = !liked
-                    likeCount += if (liked) 1 else -1
-                }) {
+                IconButton(onClick = onLikeClick) {
                     Icon(
-                        imageVector = if (liked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                        imageVector = if (post.isLiked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                         contentDescription = "Like",
-                        tint = if (liked) Color.Red else Color.Black
+                        tint = if (post.isLiked) Color.Red else Color.Black
                     )
                 }
-                Text(text = "$likeCount", fontSize = 13.sp)
+                Text(text = "${post.likes}", fontSize = 13.sp)
 
                 Spacer(modifier = Modifier.width(16.dp))
 

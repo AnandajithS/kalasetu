@@ -43,12 +43,17 @@ type ComplexityRoot struct {
 	}
 
 	Application struct {
-		ApplierID     func(childComplexity int) int
-		CreatedAt     func(childComplexity int) int
-		ID            func(childComplexity int) int
-		OpportunityID func(childComplexity int) int
-		ResumeURL     func(childComplexity int) int
-		Status        func(childComplexity int) int
+		ApplicantEmail func(childComplexity int) int
+		ApplicantName  func(childComplexity int) int
+		ApplicantPhone func(childComplexity int) int
+		ApplierID      func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Description    func(childComplexity int) int
+		EventID        func(childComplexity int) int
+		ID             func(childComplexity int) int
+		OpportunityID  func(childComplexity int) int
+		ResumeURL      func(childComplexity int) int
+		Status         func(childComplexity int) int
 	}
 
 	Author struct {
@@ -78,6 +83,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AddComment              func(childComplexity int, input model.CreateCommentInput) int
 		CreateEvent             func(childComplexity int, input model.CreateEventInput) int
+		CreateOpportunity       func(childComplexity int, input model.CreateOpportunityInput) int
 		CreatePost              func(childComplexity int, input model.CreatePostInput) int
 		DeleteComment           func(childComplexity int, id string) int
 		DeleteEvent             func(childComplexity int, id string) int
@@ -89,7 +95,24 @@ type ComplexityRoot struct {
 		UpdateApplicationStatus func(childComplexity int, id string, status string) int
 		UpdateComment           func(childComplexity int, id string, input model.UpdateCommentInput) int
 		UpdateEvent             func(childComplexity int, id string, input model.UpdateEventInput) int
+		UpdateOpportunity       func(childComplexity int, id string, input model.UpdateOpportunityInput) int
 		UpdatePost              func(childComplexity int, id string, input model.UpdatePostInput) int
+	}
+
+	Opportunity struct {
+		ApplicationsCount func(childComplexity int) int
+		Categories        func(childComplexity int) int
+		CreatedAt         func(childComplexity int) int
+		Description       func(childComplexity int) int
+		EndDate           func(childComplexity int) int
+		EventID           func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Location          func(childComplexity int) int
+		OpenSlots         func(childComplexity int) int
+		StartDate         func(childComplexity int) int
+		Status            func(childComplexity int) int
+		Title             func(childComplexity int) int
+		TotalPositions    func(childComplexity int) int
 	}
 
 	Post struct {
@@ -145,6 +168,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Application               func(childComplexity int, id string) int
+		ApplicationsByEvent       func(childComplexity int, eventID string) int
 		ApplicationsByOpportunity func(childComplexity int, opportunityID string) int
 		CommentsOfPost            func(childComplexity int, id string) int
 		Event                     func(childComplexity int, id string) int
@@ -152,6 +176,8 @@ type ComplexityRoot struct {
 		Health                    func(childComplexity int) int
 		LikesOfPost               func(childComplexity int, id string) int
 		MyApplications            func(childComplexity int) int
+		OpportunitiesByEvent      func(childComplexity int, eventID string) int
+		Opportunity               func(childComplexity int, id string) int
 		Post                      func(childComplexity int, id string) int
 		Posts                     func(childComplexity int, limit *int32, offset *int32) int
 		PostsByUser               func(childComplexity int, userID string, limit *int32, offset *int32) int
@@ -167,6 +193,8 @@ type MutationResolver interface {
 	OnboardUser(ctx context.Context, input model.OnboardingInput) (bool, error)
 	SubmitApplication(ctx context.Context, input model.CreateApplicationInput) (*model.Application, error)
 	UpdateApplicationStatus(ctx context.Context, id string, status string) (bool, error)
+	CreateOpportunity(ctx context.Context, input model.CreateOpportunityInput) (*model.Opportunity, error)
+	UpdateOpportunity(ctx context.Context, id string, input model.UpdateOpportunityInput) (*model.Opportunity, error)
 	CreatePost(ctx context.Context, input model.CreatePostInput) (*model.Post, error)
 	UpdatePost(ctx context.Context, id string, input model.UpdatePostInput) (*model.Post, error)
 	DeletePost(ctx context.Context, id string) (bool, error)
@@ -184,6 +212,9 @@ type QueryResolver interface {
 	Application(ctx context.Context, id string) (*model.Application, error)
 	MyApplications(ctx context.Context) ([]*model.Application, error)
 	ApplicationsByOpportunity(ctx context.Context, opportunityID string) ([]*model.Application, error)
+	ApplicationsByEvent(ctx context.Context, eventID string) ([]*model.Application, error)
+	OpportunitiesByEvent(ctx context.Context, eventID string) ([]*model.Opportunity, error)
+	Opportunity(ctx context.Context, id string) (*model.Opportunity, error)
 	Profile(ctx context.Context, userID string) (*model.Profile, error)
 	Posts(ctx context.Context, limit *int32, offset *int32) ([]*model.Post, error)
 	PostsByUser(ctx context.Context, userID string, limit *int32, offset *int32) ([]*model.Post, error)
@@ -225,6 +256,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Achievement.Title(childComplexity), true
 
+	case "Application.applicantEmail":
+		if e.ComplexityRoot.Application.ApplicantEmail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Application.ApplicantEmail(childComplexity), true
+	case "Application.applicantName":
+		if e.ComplexityRoot.Application.ApplicantName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Application.ApplicantName(childComplexity), true
+	case "Application.applicantPhone":
+		if e.ComplexityRoot.Application.ApplicantPhone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Application.ApplicantPhone(childComplexity), true
 	case "Application.applierId":
 		if e.ComplexityRoot.Application.ApplierID == nil {
 			break
@@ -237,6 +286,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Application.CreatedAt(childComplexity), true
+	case "Application.description":
+		if e.ComplexityRoot.Application.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Application.Description(childComplexity), true
+	case "Application.eventId":
+		if e.ComplexityRoot.Application.EventID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Application.EventID(childComplexity), true
 	case "Application.id":
 		if e.ComplexityRoot.Application.ID == nil {
 			break
@@ -377,6 +438,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateEvent(childComplexity, args["input"].(model.CreateEventInput)), true
+	case "Mutation.createOpportunity":
+		if e.ComplexityRoot.Mutation.CreateOpportunity == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createOpportunity_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateOpportunity(childComplexity, args["input"].(model.CreateOpportunityInput)), true
 	case "Mutation.createPost":
 		if e.ComplexityRoot.Mutation.CreatePost == nil {
 			break
@@ -498,6 +570,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateEvent(childComplexity, args["id"].(string), args["input"].(model.UpdateEventInput)), true
+	case "Mutation.updateOpportunity":
+		if e.ComplexityRoot.Mutation.UpdateOpportunity == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateOpportunity_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateOpportunity(childComplexity, args["id"].(string), args["input"].(model.UpdateOpportunityInput)), true
 	case "Mutation.updatePost":
 		if e.ComplexityRoot.Mutation.UpdatePost == nil {
 			break
@@ -509,6 +592,85 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdatePost(childComplexity, args["id"].(string), args["input"].(model.UpdatePostInput)), true
+
+	case "Opportunity.applicationsCount":
+		if e.ComplexityRoot.Opportunity.ApplicationsCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Opportunity.ApplicationsCount(childComplexity), true
+	case "Opportunity.categories":
+		if e.ComplexityRoot.Opportunity.Categories == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Opportunity.Categories(childComplexity), true
+	case "Opportunity.createdAt":
+		if e.ComplexityRoot.Opportunity.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Opportunity.CreatedAt(childComplexity), true
+	case "Opportunity.description":
+		if e.ComplexityRoot.Opportunity.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Opportunity.Description(childComplexity), true
+	case "Opportunity.endDate":
+		if e.ComplexityRoot.Opportunity.EndDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Opportunity.EndDate(childComplexity), true
+	case "Opportunity.eventId":
+		if e.ComplexityRoot.Opportunity.EventID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Opportunity.EventID(childComplexity), true
+	case "Opportunity.id":
+		if e.ComplexityRoot.Opportunity.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Opportunity.ID(childComplexity), true
+	case "Opportunity.location":
+		if e.ComplexityRoot.Opportunity.Location == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Opportunity.Location(childComplexity), true
+	case "Opportunity.openSlots":
+		if e.ComplexityRoot.Opportunity.OpenSlots == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Opportunity.OpenSlots(childComplexity), true
+	case "Opportunity.startDate":
+		if e.ComplexityRoot.Opportunity.StartDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Opportunity.StartDate(childComplexity), true
+	case "Opportunity.status":
+		if e.ComplexityRoot.Opportunity.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Opportunity.Status(childComplexity), true
+	case "Opportunity.title":
+		if e.ComplexityRoot.Opportunity.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Opportunity.Title(childComplexity), true
+	case "Opportunity.totalPositions":
+		if e.ComplexityRoot.Opportunity.TotalPositions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Opportunity.TotalPositions(childComplexity), true
 
 	case "Post.categoryId":
 		if e.ComplexityRoot.Post.CategoryID == nil {
@@ -759,6 +921,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Application(childComplexity, args["id"].(string)), true
+	case "Query.applicationsByEvent":
+		if e.ComplexityRoot.Query.ApplicationsByEvent == nil {
+			break
+		}
+
+		args, err := ec.field_Query_applicationsByEvent_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.ApplicationsByEvent(childComplexity, args["eventId"].(string)), true
 	case "Query.applicationsByOpportunity":
 		if e.ComplexityRoot.Query.ApplicationsByOpportunity == nil {
 			break
@@ -822,6 +995,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.MyApplications(childComplexity), true
+	case "Query.opportunitiesByEvent":
+		if e.ComplexityRoot.Query.OpportunitiesByEvent == nil {
+			break
+		}
+
+		args, err := ec.field_Query_opportunitiesByEvent_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.OpportunitiesByEvent(childComplexity, args["eventId"].(string)), true
+	case "Query.opportunity":
+		if e.ComplexityRoot.Query.Opportunity == nil {
+			break
+		}
+
+		args, err := ec.field_Query_opportunity_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Opportunity(childComplexity, args["id"].(string)), true
 	case "Query.post":
 		if e.ComplexityRoot.Query.Post == nil {
 			break
@@ -884,10 +1079,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateApplicationInput,
 		ec.unmarshalInputCreateCommentInput,
 		ec.unmarshalInputCreateEventInput,
+		ec.unmarshalInputCreateOpportunityInput,
 		ec.unmarshalInputCreatePostInput,
 		ec.unmarshalInputOnboardingInput,
 		ec.unmarshalInputUpdateCommentInput,
 		ec.unmarshalInputUpdateEventInput,
+		ec.unmarshalInputUpdateOpportunityInput,
 		ec.unmarshalInputUpdatePostInput,
 	)
 	first := true
@@ -998,6 +1195,17 @@ func (ec *executionContext) field_Mutation_createEvent_args(ctx context.Context,
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateEventInput2kalasetuᚋgraphᚋmodelᚐCreateEventInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createOpportunity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateOpportunityInput2kalasetuᚋgraphᚋmodelᚐCreateOpportunityInput)
 	if err != nil {
 		return nil, err
 	}
@@ -1141,6 +1349,22 @@ func (ec *executionContext) field_Mutation_updateEvent_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateOpportunity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateOpportunityInput2kalasetuᚋgraphᚋmodelᚐUpdateOpportunityInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updatePost_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1179,6 +1403,17 @@ func (ec *executionContext) field_Query_application_args(ctx context.Context, ra
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_applicationsByEvent_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "eventId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["eventId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_applicationsByOpportunity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1213,6 +1448,28 @@ func (ec *executionContext) field_Query_event_args(ctx context.Context, rawArgs 
 }
 
 func (ec *executionContext) field_Query_likesOfPost_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_opportunitiesByEvent_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "eventId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["eventId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_opportunity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
@@ -1460,13 +1717,42 @@ func (ec *executionContext) _Application_opportunityId(ctx context.Context, fiel
 			return obj.OpportunityID, nil
 		},
 		nil,
+		ec.marshalOID2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Application_opportunityId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Application",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Application_eventId(ctx context.Context, field graphql.CollectedField, obj *model.Application) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Application_eventId,
+		func(ctx context.Context) (any, error) {
+			return obj.EventID, nil
+		},
+		nil,
 		ec.marshalNID2string,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Application_opportunityId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Application_eventId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Application",
 		Field:      field,
@@ -1508,6 +1794,122 @@ func (ec *executionContext) fieldContext_Application_applierId(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Application_applicantName(ctx context.Context, field graphql.CollectedField, obj *model.Application) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Application_applicantName,
+		func(ctx context.Context) (any, error) {
+			return obj.ApplicantName, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Application_applicantName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Application",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Application_applicantEmail(ctx context.Context, field graphql.CollectedField, obj *model.Application) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Application_applicantEmail,
+		func(ctx context.Context) (any, error) {
+			return obj.ApplicantEmail, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Application_applicantEmail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Application",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Application_applicantPhone(ctx context.Context, field graphql.CollectedField, obj *model.Application) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Application_applicantPhone,
+		func(ctx context.Context) (any, error) {
+			return obj.ApplicantPhone, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Application_applicantPhone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Application",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Application_description(ctx context.Context, field graphql.CollectedField, obj *model.Application) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Application_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Application_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Application",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Application_resumeUrl(ctx context.Context, field graphql.CollectedField, obj *model.Application) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1518,9 +1920,9 @@ func (ec *executionContext) _Application_resumeUrl(ctx context.Context, field gr
 			return obj.ResumeURL, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalOString2ᚖstring,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -2255,8 +2657,18 @@ func (ec *executionContext) fieldContext_Mutation_submitApplication(ctx context.
 				return ec.fieldContext_Application_id(ctx, field)
 			case "opportunityId":
 				return ec.fieldContext_Application_opportunityId(ctx, field)
+			case "eventId":
+				return ec.fieldContext_Application_eventId(ctx, field)
 			case "applierId":
 				return ec.fieldContext_Application_applierId(ctx, field)
+			case "applicantName":
+				return ec.fieldContext_Application_applicantName(ctx, field)
+			case "applicantEmail":
+				return ec.fieldContext_Application_applicantEmail(ctx, field)
+			case "applicantPhone":
+				return ec.fieldContext_Application_applicantPhone(ctx, field)
+			case "description":
+				return ec.fieldContext_Application_description(ctx, field)
 			case "resumeUrl":
 				return ec.fieldContext_Application_resumeUrl(ctx, field)
 			case "status":
@@ -2316,6 +2728,144 @@ func (ec *executionContext) fieldContext_Mutation_updateApplicationStatus(ctx co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateApplicationStatus_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createOpportunity(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createOpportunity,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateOpportunity(ctx, fc.Args["input"].(model.CreateOpportunityInput))
+		},
+		nil,
+		ec.marshalNOpportunity2ᚖkalasetuᚋgraphᚋmodelᚐOpportunity,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createOpportunity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Opportunity_id(ctx, field)
+			case "eventId":
+				return ec.fieldContext_Opportunity_eventId(ctx, field)
+			case "title":
+				return ec.fieldContext_Opportunity_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Opportunity_description(ctx, field)
+			case "categories":
+				return ec.fieldContext_Opportunity_categories(ctx, field)
+			case "location":
+				return ec.fieldContext_Opportunity_location(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Opportunity_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Opportunity_endDate(ctx, field)
+			case "totalPositions":
+				return ec.fieldContext_Opportunity_totalPositions(ctx, field)
+			case "openSlots":
+				return ec.fieldContext_Opportunity_openSlots(ctx, field)
+			case "applicationsCount":
+				return ec.fieldContext_Opportunity_applicationsCount(ctx, field)
+			case "status":
+				return ec.fieldContext_Opportunity_status(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Opportunity_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Opportunity", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createOpportunity_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateOpportunity(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateOpportunity,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateOpportunity(ctx, fc.Args["id"].(string), fc.Args["input"].(model.UpdateOpportunityInput))
+		},
+		nil,
+		ec.marshalNOpportunity2ᚖkalasetuᚋgraphᚋmodelᚐOpportunity,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateOpportunity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Opportunity_id(ctx, field)
+			case "eventId":
+				return ec.fieldContext_Opportunity_eventId(ctx, field)
+			case "title":
+				return ec.fieldContext_Opportunity_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Opportunity_description(ctx, field)
+			case "categories":
+				return ec.fieldContext_Opportunity_categories(ctx, field)
+			case "location":
+				return ec.fieldContext_Opportunity_location(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Opportunity_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Opportunity_endDate(ctx, field)
+			case "totalPositions":
+				return ec.fieldContext_Opportunity_totalPositions(ctx, field)
+			case "openSlots":
+				return ec.fieldContext_Opportunity_openSlots(ctx, field)
+			case "applicationsCount":
+				return ec.fieldContext_Opportunity_applicationsCount(ctx, field)
+			case "status":
+				return ec.fieldContext_Opportunity_status(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Opportunity_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Opportunity", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateOpportunity_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2722,6 +3272,383 @@ func (ec *executionContext) fieldContext_Mutation_deleteComment(ctx context.Cont
 	if fc.Args, err = ec.field_Mutation_deleteComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Opportunity_id(ctx context.Context, field graphql.CollectedField, obj *model.Opportunity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Opportunity_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Opportunity_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Opportunity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Opportunity_eventId(ctx context.Context, field graphql.CollectedField, obj *model.Opportunity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Opportunity_eventId,
+		func(ctx context.Context) (any, error) {
+			return obj.EventID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Opportunity_eventId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Opportunity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Opportunity_title(ctx context.Context, field graphql.CollectedField, obj *model.Opportunity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Opportunity_title,
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Opportunity_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Opportunity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Opportunity_description(ctx context.Context, field graphql.CollectedField, obj *model.Opportunity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Opportunity_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Opportunity_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Opportunity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Opportunity_categories(ctx context.Context, field graphql.CollectedField, obj *model.Opportunity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Opportunity_categories,
+		func(ctx context.Context) (any, error) {
+			return obj.Categories, nil
+		},
+		nil,
+		ec.marshalNString2ᚕstringᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Opportunity_categories(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Opportunity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Opportunity_location(ctx context.Context, field graphql.CollectedField, obj *model.Opportunity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Opportunity_location,
+		func(ctx context.Context) (any, error) {
+			return obj.Location, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Opportunity_location(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Opportunity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Opportunity_startDate(ctx context.Context, field graphql.CollectedField, obj *model.Opportunity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Opportunity_startDate,
+		func(ctx context.Context) (any, error) {
+			return obj.StartDate, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Opportunity_startDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Opportunity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Opportunity_endDate(ctx context.Context, field graphql.CollectedField, obj *model.Opportunity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Opportunity_endDate,
+		func(ctx context.Context) (any, error) {
+			return obj.EndDate, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Opportunity_endDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Opportunity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Opportunity_totalPositions(ctx context.Context, field graphql.CollectedField, obj *model.Opportunity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Opportunity_totalPositions,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalPositions, nil
+		},
+		nil,
+		ec.marshalNInt2int32,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Opportunity_totalPositions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Opportunity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Opportunity_openSlots(ctx context.Context, field graphql.CollectedField, obj *model.Opportunity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Opportunity_openSlots,
+		func(ctx context.Context) (any, error) {
+			return obj.OpenSlots, nil
+		},
+		nil,
+		ec.marshalNInt2int32,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Opportunity_openSlots(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Opportunity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Opportunity_applicationsCount(ctx context.Context, field graphql.CollectedField, obj *model.Opportunity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Opportunity_applicationsCount,
+		func(ctx context.Context) (any, error) {
+			return obj.ApplicationsCount, nil
+		},
+		nil,
+		ec.marshalNInt2int32,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Opportunity_applicationsCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Opportunity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Opportunity_status(ctx context.Context, field graphql.CollectedField, obj *model.Opportunity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Opportunity_status,
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Opportunity_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Opportunity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Opportunity_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Opportunity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Opportunity_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Opportunity_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Opportunity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -4100,8 +5027,18 @@ func (ec *executionContext) fieldContext_Query_application(ctx context.Context, 
 				return ec.fieldContext_Application_id(ctx, field)
 			case "opportunityId":
 				return ec.fieldContext_Application_opportunityId(ctx, field)
+			case "eventId":
+				return ec.fieldContext_Application_eventId(ctx, field)
 			case "applierId":
 				return ec.fieldContext_Application_applierId(ctx, field)
+			case "applicantName":
+				return ec.fieldContext_Application_applicantName(ctx, field)
+			case "applicantEmail":
+				return ec.fieldContext_Application_applicantEmail(ctx, field)
+			case "applicantPhone":
+				return ec.fieldContext_Application_applicantPhone(ctx, field)
+			case "description":
+				return ec.fieldContext_Application_description(ctx, field)
 			case "resumeUrl":
 				return ec.fieldContext_Application_resumeUrl(ctx, field)
 			case "status":
@@ -4154,8 +5091,18 @@ func (ec *executionContext) fieldContext_Query_myApplications(_ context.Context,
 				return ec.fieldContext_Application_id(ctx, field)
 			case "opportunityId":
 				return ec.fieldContext_Application_opportunityId(ctx, field)
+			case "eventId":
+				return ec.fieldContext_Application_eventId(ctx, field)
 			case "applierId":
 				return ec.fieldContext_Application_applierId(ctx, field)
+			case "applicantName":
+				return ec.fieldContext_Application_applicantName(ctx, field)
+			case "applicantEmail":
+				return ec.fieldContext_Application_applicantEmail(ctx, field)
+			case "applicantPhone":
+				return ec.fieldContext_Application_applicantPhone(ctx, field)
+			case "description":
+				return ec.fieldContext_Application_description(ctx, field)
 			case "resumeUrl":
 				return ec.fieldContext_Application_resumeUrl(ctx, field)
 			case "status":
@@ -4198,8 +5145,18 @@ func (ec *executionContext) fieldContext_Query_applicationsByOpportunity(ctx con
 				return ec.fieldContext_Application_id(ctx, field)
 			case "opportunityId":
 				return ec.fieldContext_Application_opportunityId(ctx, field)
+			case "eventId":
+				return ec.fieldContext_Application_eventId(ctx, field)
 			case "applierId":
 				return ec.fieldContext_Application_applierId(ctx, field)
+			case "applicantName":
+				return ec.fieldContext_Application_applicantName(ctx, field)
+			case "applicantEmail":
+				return ec.fieldContext_Application_applicantEmail(ctx, field)
+			case "applicantPhone":
+				return ec.fieldContext_Application_applicantPhone(ctx, field)
+			case "description":
+				return ec.fieldContext_Application_description(ctx, field)
 			case "resumeUrl":
 				return ec.fieldContext_Application_resumeUrl(ctx, field)
 			case "status":
@@ -4218,6 +5175,209 @@ func (ec *executionContext) fieldContext_Query_applicationsByOpportunity(ctx con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_applicationsByOpportunity_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_applicationsByEvent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_applicationsByEvent,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().ApplicationsByEvent(ctx, fc.Args["eventId"].(string))
+		},
+		nil,
+		ec.marshalNApplication2ᚕᚖkalasetuᚋgraphᚋmodelᚐApplicationᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_applicationsByEvent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Application_id(ctx, field)
+			case "opportunityId":
+				return ec.fieldContext_Application_opportunityId(ctx, field)
+			case "eventId":
+				return ec.fieldContext_Application_eventId(ctx, field)
+			case "applierId":
+				return ec.fieldContext_Application_applierId(ctx, field)
+			case "applicantName":
+				return ec.fieldContext_Application_applicantName(ctx, field)
+			case "applicantEmail":
+				return ec.fieldContext_Application_applicantEmail(ctx, field)
+			case "applicantPhone":
+				return ec.fieldContext_Application_applicantPhone(ctx, field)
+			case "description":
+				return ec.fieldContext_Application_description(ctx, field)
+			case "resumeUrl":
+				return ec.fieldContext_Application_resumeUrl(ctx, field)
+			case "status":
+				return ec.fieldContext_Application_status(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Application_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_applicationsByEvent_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_opportunitiesByEvent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_opportunitiesByEvent,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().OpportunitiesByEvent(ctx, fc.Args["eventId"].(string))
+		},
+		nil,
+		ec.marshalNOpportunity2ᚕᚖkalasetuᚋgraphᚋmodelᚐOpportunityᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_opportunitiesByEvent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Opportunity_id(ctx, field)
+			case "eventId":
+				return ec.fieldContext_Opportunity_eventId(ctx, field)
+			case "title":
+				return ec.fieldContext_Opportunity_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Opportunity_description(ctx, field)
+			case "categories":
+				return ec.fieldContext_Opportunity_categories(ctx, field)
+			case "location":
+				return ec.fieldContext_Opportunity_location(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Opportunity_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Opportunity_endDate(ctx, field)
+			case "totalPositions":
+				return ec.fieldContext_Opportunity_totalPositions(ctx, field)
+			case "openSlots":
+				return ec.fieldContext_Opportunity_openSlots(ctx, field)
+			case "applicationsCount":
+				return ec.fieldContext_Opportunity_applicationsCount(ctx, field)
+			case "status":
+				return ec.fieldContext_Opportunity_status(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Opportunity_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Opportunity", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_opportunitiesByEvent_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_opportunity(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_opportunity,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().Opportunity(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalOOpportunity2ᚖkalasetuᚋgraphᚋmodelᚐOpportunity,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_opportunity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Opportunity_id(ctx, field)
+			case "eventId":
+				return ec.fieldContext_Opportunity_eventId(ctx, field)
+			case "title":
+				return ec.fieldContext_Opportunity_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Opportunity_description(ctx, field)
+			case "categories":
+				return ec.fieldContext_Opportunity_categories(ctx, field)
+			case "location":
+				return ec.fieldContext_Opportunity_location(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Opportunity_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Opportunity_endDate(ctx, field)
+			case "totalPositions":
+				return ec.fieldContext_Opportunity_totalPositions(ctx, field)
+			case "openSlots":
+				return ec.fieldContext_Opportunity_openSlots(ctx, field)
+			case "applicationsCount":
+				return ec.fieldContext_Opportunity_applicationsCount(ctx, field)
+			case "status":
+				return ec.fieldContext_Opportunity_status(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Opportunity_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Opportunity", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_opportunity_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6159,7 +7319,7 @@ func (ec *executionContext) unmarshalInputCreateApplicationInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"opportunityId", "resumeUrl"}
+	fieldsInOrder := [...]string{"opportunityId", "eventId", "applicantName", "applicantEmail", "applicantPhone", "description", "resumeUrl"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -6168,14 +7328,49 @@ func (ec *executionContext) unmarshalInputCreateApplicationInput(ctx context.Con
 		switch k {
 		case "opportunityId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("opportunityId"))
-			data, err := ec.unmarshalNID2string(ctx, v)
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.OpportunityID = data
+		case "eventId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("eventId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EventID = data
+		case "applicantName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("applicantName"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ApplicantName = data
+		case "applicantEmail":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("applicantEmail"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ApplicantEmail = data
+		case "applicantPhone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("applicantPhone"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ApplicantPhone = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
 		case "resumeUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resumeUrl"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6261,6 +7456,92 @@ func (ec *executionContext) unmarshalInputCreateEventInput(ctx context.Context, 
 				return it, err
 			}
 			it.Duration = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateOpportunityInput(ctx context.Context, obj any) (model.CreateOpportunityInput, error) {
+	var it model.CreateOpportunityInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"eventId", "title", "description", "categories", "location", "startDate", "endDate", "totalPositions", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "eventId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("eventId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EventID = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "categories":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categories"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Categories = data
+		case "location":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("location"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Location = data
+		case "startDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "endDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
+		case "totalPositions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("totalPositions"))
+			data, err := ec.unmarshalOInt2ᚖint32(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TotalPositions = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
 		}
 	}
 	return it, nil
@@ -6449,6 +7730,85 @@ func (ec *executionContext) unmarshalInputUpdateEventInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateOpportunityInput(ctx context.Context, obj any) (model.UpdateOpportunityInput, error) {
+	var it model.UpdateOpportunityInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"title", "description", "categories", "location", "startDate", "endDate", "totalPositions", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "categories":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categories"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Categories = data
+		case "location":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("location"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Location = data
+		case "startDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "endDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
+		case "totalPositions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("totalPositions"))
+			data, err := ec.unmarshalOInt2ᚖint32(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TotalPositions = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdatePostInput(ctx context.Context, obj any) (model.UpdatePostInput, error) {
 	var it model.UpdatePostInput
 	if obj == nil {
@@ -6561,6 +7921,8 @@ func (ec *executionContext) _Application(ctx context.Context, sel ast.SelectionS
 			}
 		case "opportunityId":
 			out.Values[i] = ec._Application_opportunityId(ctx, field, obj)
+		case "eventId":
+			out.Values[i] = ec._Application_eventId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6569,11 +7931,16 @@ func (ec *executionContext) _Application(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "applicantName":
+			out.Values[i] = ec._Application_applicantName(ctx, field, obj)
+		case "applicantEmail":
+			out.Values[i] = ec._Application_applicantEmail(ctx, field, obj)
+		case "applicantPhone":
+			out.Values[i] = ec._Application_applicantPhone(ctx, field, obj)
+		case "description":
+			out.Values[i] = ec._Application_description(ctx, field, obj)
 		case "resumeUrl":
 			out.Values[i] = ec._Application_resumeUrl(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "status":
 			out.Values[i] = ec._Application_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -6839,6 +8206,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createOpportunity":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createOpportunity(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateOpportunity":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateOpportunity(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createPost":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createPost(ctx, field)
@@ -6892,6 +8273,93 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteComment(ctx, field)
 			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var opportunityImplementors = []string{"Opportunity"}
+
+func (ec *executionContext) _Opportunity(ctx context.Context, sel ast.SelectionSet, obj *model.Opportunity) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, opportunityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Opportunity")
+		case "id":
+			out.Values[i] = ec._Opportunity_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "eventId":
+			out.Values[i] = ec._Opportunity_eventId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._Opportunity_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._Opportunity_description(ctx, field, obj)
+		case "categories":
+			out.Values[i] = ec._Opportunity_categories(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "location":
+			out.Values[i] = ec._Opportunity_location(ctx, field, obj)
+		case "startDate":
+			out.Values[i] = ec._Opportunity_startDate(ctx, field, obj)
+		case "endDate":
+			out.Values[i] = ec._Opportunity_endDate(ctx, field, obj)
+		case "totalPositions":
+			out.Values[i] = ec._Opportunity_totalPositions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "openSlots":
+			out.Values[i] = ec._Opportunity_openSlots(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "applicationsCount":
+			out.Values[i] = ec._Opportunity_applicationsCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._Opportunity_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._Opportunity_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7392,6 +8860,69 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "applicationsByEvent":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_applicationsByEvent(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "opportunitiesByEvent":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_opportunitiesByEvent(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "opportunity":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_opportunity(ctx, field)
 				return res
 			}
 
@@ -8049,6 +9580,11 @@ func (ec *executionContext) unmarshalNCreateEventInput2kalasetuᚋgraphᚋmodel�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNCreateOpportunityInput2kalasetuᚋgraphᚋmodelᚐCreateOpportunityInput(ctx context.Context, v any) (model.CreateOpportunityInput, error) {
+	res, err := ec.unmarshalInputCreateOpportunityInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNCreatePostInput2kalasetuᚋgraphᚋmodelᚐCreatePostInput(ctx context.Context, v any) (model.CreatePostInput, error) {
 	res, err := ec.unmarshalInputCreatePostInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -8119,6 +9655,36 @@ func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.Selec
 func (ec *executionContext) unmarshalNOnboardingInput2kalasetuᚋgraphᚋmodelᚐOnboardingInput(ctx context.Context, v any) (model.OnboardingInput, error) {
 	res, err := ec.unmarshalInputOnboardingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNOpportunity2kalasetuᚋgraphᚋmodelᚐOpportunity(ctx context.Context, sel ast.SelectionSet, v model.Opportunity) graphql.Marshaler {
+	return ec._Opportunity(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOpportunity2ᚕᚖkalasetuᚋgraphᚋmodelᚐOpportunityᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Opportunity) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNOpportunity2ᚖkalasetuᚋgraphᚋmodelᚐOpportunity(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNOpportunity2ᚖkalasetuᚋgraphᚋmodelᚐOpportunity(ctx context.Context, sel ast.SelectionSet, v *model.Opportunity) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Opportunity(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPost2kalasetuᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v model.Post) graphql.Marshaler {
@@ -8270,6 +9836,11 @@ func (ec *executionContext) unmarshalNUpdateCommentInput2kalasetuᚋgraphᚋmode
 
 func (ec *executionContext) unmarshalNUpdateEventInput2kalasetuᚋgraphᚋmodelᚐUpdateEventInput(ctx context.Context, v any) (model.UpdateEventInput, error) {
 	res, err := ec.unmarshalInputUpdateEventInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateOpportunityInput2kalasetuᚋgraphᚋmodelᚐUpdateOpportunityInput(ctx context.Context, v any) (model.UpdateOpportunityInput, error) {
+	res, err := ec.unmarshalInputUpdateOpportunityInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -8519,6 +10090,13 @@ func (ec *executionContext) marshalOInt2ᚖint32(ctx context.Context, sel ast.Se
 	_ = ctx
 	res := graphql.MarshalInt32(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOOpportunity2ᚖkalasetuᚋgraphᚋmodelᚐOpportunity(ctx context.Context, sel ast.SelectionSet, v *model.Opportunity) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Opportunity(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOPost2ᚖkalasetuᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {

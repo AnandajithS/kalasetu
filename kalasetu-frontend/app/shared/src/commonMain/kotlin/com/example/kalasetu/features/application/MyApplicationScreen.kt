@@ -46,6 +46,10 @@ fun MyApplicationsScreen(
     onSwitchRole: () -> Unit = {},
     onMenuClick: () -> Unit
 ){
+    LaunchedEffect(Unit) {
+        ApplicationRepository.fetchMyApplications()
+    }
+
     val allApplications by ApplicationStore.applications.collectAsState()
     val tabs = listOf("All", "Pending", "Accepted", "Rejected")
     var selectedTab by remember { mutableStateOf(0) }

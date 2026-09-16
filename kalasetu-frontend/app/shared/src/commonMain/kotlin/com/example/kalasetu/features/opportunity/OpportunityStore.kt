@@ -16,13 +16,20 @@ object OpportunityStore {
     fun opportunitiesForEvent(eventId: String): List<Opportunity> =
         _opportunities.value.filter { it.eventId == eventId }
 
+    fun getOpportunity(id: String): Opportunity? =
+        _opportunities.value.firstOrNull { it.id == id }
+
     fun deleteOpportunity(id: String) {
         _opportunities.update { it.filterNot { opp -> opp.id == id } }
     }
 
     fun updateOpportunity(opportunity: Opportunity) {
         _opportunities.update { list ->
-            list.map { if (it.id == opportunity.id) opportunity else it }
+            if (list.any { it.id == opportunity.id }) {
+                list.map { if (it.id == opportunity.id) opportunity else it }
+            } else {
+                list + opportunity
+            }
         }
     }
 }

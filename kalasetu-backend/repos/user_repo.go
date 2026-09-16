@@ -127,12 +127,14 @@ func (r *userRepository) StartOnboarding(ctx context.Context, userID int, onboar
 	// 3. Insert labels and link user_labels
 	for _, labelName := range onboardingUser.Labels {
 		query = `
-			SELECT id FROM labels WHERE label_name = $1
+			INSERT INTO labels (label_name) VALUES ($1)
+			ON CONFLICT (label_name) DO UPDATE SET label_name = EXCLUDED.label_name
+			RETURNING id
 		`
 		var labelID int
 		err = tx.QueryRowContext(ctx, query, labelName).Scan(&labelID)
 		if err != nil {
-			return fmt.Errorf("label lookup failed for %q: %w", labelName, err)
+			return fmt.Errorf("label lookup/insert failed for %q: %w", labelName, err)
 		}
 
 		query = `
