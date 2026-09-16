@@ -52,4 +52,6 @@ sealed class Screen {
 
     // Organizer previews one application (with Accept/Reject)
     data class ApplicationPreview(val applicationId: String) : Screen()
+
+    data class CreateOpportunity(val eventId: String) : Screen()
 }

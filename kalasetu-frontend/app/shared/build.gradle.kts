@@ -109,7 +109,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.coil.compose)
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
             implementation(libs.apollo.runtime)
             implementation(libs.filekit.core)
             implementation(libs.filekit.compose)
