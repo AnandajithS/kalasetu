@@ -30,6 +30,7 @@ import com.example.kalasetu.features.feed.FeedViewModel
 import com.example.kalasetu.repository.EventRepository
 import kotlinx.coroutines.launch
 import com.example.kalasetu.repository.AuthRepository
+import com.example.kalasetu.repository.PostRepository
 import com.example.kalasetu.repository.OnboardingRepository
 import com.example.kalasetu.features.onboarding.OnboardingData
 import kotlinx.coroutines.launch
@@ -85,7 +86,7 @@ fun App() {
                         scope.launch { drawerState.close() }
 
                         when (route) {
-                            "Profile" -> screen = Screen.Profile(userId = "123")
+                            "Profile" -> screen = Screen.Profile(userId = (AuthStore.userId ?: 123).toString())
                             "Store" -> screen = Screen.Store
                             "Dashboard" -> screen = Screen.Feed
                             "Events" -> screen = Screen.ArtistHome(userId = "123")
@@ -102,11 +103,7 @@ fun App() {
                     userAvatarUrl = currentProfile?.avatarUrl,
                     userAvatarBytes = currentProfile?.avatarBytes,
                     userName = currentProfile?.name ?: userName,
-                    onNavigateToProfile = {
-                        screen = Screen.Profile(
-                            userId = AuthStore.userId?.toString() ?: ""
-                        )
-                    },
+onNavigateToProfile = { screen = Screen.Profile(userId = (AuthStore.userId ?: 123).toString()) },
                     onNavigateToStore = { screen = Screen.Store },
                     onNavigateToHome = { screen = Screen.Feed },
                     onMenuClick = {
@@ -139,7 +136,7 @@ fun App() {
                                 avatarUrl = currentProfile?.avatarUrl,
                                 avatarBytes = currentProfile?.avatarBytes,
                                 userName = currentProfile?.name ?: userName,
-                                onProfileClick = { screen = Screen.Profile(userId = "123") },
+                                onProfileClick = { screen = Screen.Profile(userId = (AuthStore.userId ?: 123).toString()) },
                                 onMenuClick = { scope.launch { drawerState.open() } }
                             )
                         },
@@ -148,7 +145,7 @@ fun App() {
                                 selectedIndex = 0,
                                 onStoreClick = { screen = Screen.Store },
                                 onHomeClick = { screen = Screen.Feed },
-                                onProfileClick = { screen = Screen.Profile(userId = "123") }
+                                onProfileClick = { screen = Screen.Profile(userId = (AuthStore.userId ?: 123).toString()) }
                             )
                         }
                     ) { innerPadding ->
@@ -181,6 +178,9 @@ fun App() {
                             )
 
                             if (loginResult.isSuccess) {
+
+                                userName = AuthStore.userName ?: name
+                                userEmail = AuthStore.userEmail ?: email
 
                                 onboardingData = OnboardingData(
                                     name = name
@@ -221,6 +221,9 @@ fun App() {
 
                             println("========== APP LOGIN SUCCESS ==========")
 
+                            userName = AuthStore.userName ?: userName
+                            userEmail = AuthStore.userEmail ?: userEmail
+
                             screen = Screen.Feed
 
                         } else {
@@ -238,11 +241,10 @@ fun App() {
                 onBack = { screen = Screen.AuthSignup },
             )
             Screen.OnboardingBasicInfo -> OnboardingBasicInfoScreen(
-                onNext = { name, role ->
-                    userName = name
+                onNext = { description, role ->
                     selectedRole = role
                     onboardingData = onboardingData.copy(
-                        name = name,
+                        name = description,
                         role = role
                     )
                     screen = Screen.OnboardingLocation
@@ -280,7 +282,7 @@ fun App() {
                         scope.launch {
                             screen = Screen.Feed
                             val response = onboardingRepository.onboardUser(
-                                name = onboardingData.name,
+                                name = userName.ifBlank { onboardingData.name },
                                 role = onboardingData.role,
                                 location = onboardingData.location,
                                 labels = onboardingData.labels,
@@ -308,7 +310,9 @@ fun App() {
                         ProfilePresenter(
                             repository = ProfileRepository(
                                 initialProfile = currentProfile ?: Profile(
-                                    name = userName,
+                                    id = currentScreen.userId,
+                                    name = userName.ifBlank { AuthStore.userName.orEmpty() },
+                                    email = userEmail.ifBlank { AuthStore.userEmail.orEmpty() },
                                     location = userLocation,
                                 )
                             )
@@ -320,7 +324,7 @@ fun App() {
                                 selectedIndex = 2,
                                 onStoreClick = { screen = Screen.Store },
                                 onHomeClick = { screen = Screen.Feed },
-                                onProfileClick = { screen = Screen.Profile(userId = "123") }
+                                onProfileClick = { screen = Screen.Profile(userId = (AuthStore.userId ?: 123).toString()) }
                             )
                         },
                         floatingActionButton = {
@@ -358,7 +362,7 @@ fun App() {
                                 userAvatarBytes = currentProfile?.avatarBytes
                             )
                         },
-                        onBack = { screen = Screen.Profile(userId = "123") }
+                        onBack = { screen = Screen.Profile(userId = (AuthStore.userId ?: 123).toString()) }
                     )
                 }
 
@@ -369,17 +373,27 @@ fun App() {
                         userName = currentScreen.userName,
                         userAvatarUrl = currentScreen.userAvatarUrl,
                         userAvatarBytes = currentScreen.userAvatarBytes,
-                        onPublish = {
-                            publishedPosts = publishedPosts + DraftPost(
-                                timeAgo = "Just now",
-                                content = currentScreen.description,
-                                likes = 0,
-                                comments = 0,
-                                hasImage = currentScreen.imageBytes.isNotEmpty(),
-                                imageBytes = currentScreen.imageBytes
-                            )
+onPublish = {
+                            scope.launch {
+                                val published = PostRepository().createPost(
+                                    content = currentScreen.description,
+                                    images = currentScreen.imageBytes
+                                )
 
-                            screen = Screen.Profile(userId = "123")
+                                println("========== DISPATCH PUBLISH ==========")
+                                println("published = $published")
+
+                                publishedPosts = publishedPosts + DraftPost(
+                                    timeAgo = "Just now",
+                                    content = currentScreen.description,
+                                    likes = 0,
+                                    comments = 0,
+                                    hasImage = currentScreen.imageBytes.isNotEmpty(),
+                                    imageBytes = currentScreen.imageBytes
+                                )
+
+                                screen = Screen.Profile(userId = (AuthStore.userId ?: 123).toString())
+                            }
                         },
                         onBack = { screen = Screen.UploadPost }
                     )
@@ -388,10 +402,10 @@ fun App() {
                     BackHandler { screen = Screen.Profile(userId = currentScreen.userId) }
                     val profileToEdit = currentProfile ?: Profile(
                         id = currentScreen.userId,
-                        name = userName,
+                        name = userName.ifBlank { AuthStore.userName.orEmpty() },
                         location = userLocation,
                         username = "",
-                        email = userEmail,
+                        email = userEmail.ifBlank { AuthStore.userEmail.orEmpty() },
                     )
                     EditProfileScreen(
                         profile = profileToEdit,

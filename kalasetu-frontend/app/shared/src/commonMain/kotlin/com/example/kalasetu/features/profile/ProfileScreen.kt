@@ -74,9 +74,12 @@ fun ProfileScreen(
         }
 
         uiState.profile != null -> {
+            val backendPosts = uiState.profile!!.recentPosts.map { post -> profilePostToDraftPost(post) }
+            val displayPosts = (posts + backendPosts).distinctBy { it.content }
+
             ProfileContent(
                 profile = uiState.profile!!,
-                posts = posts,
+                posts = displayPosts,
                 selectedTab = uiState.selectedTab,
                 onTabSelected = { tab ->
                     uiState = uiState.copy(selectedTab = tab)

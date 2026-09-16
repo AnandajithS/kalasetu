@@ -1,9 +1,5 @@
 .env
 .vscode
-<<<<<<< HEAD
 .idea
-=======
 .postman
 postman/
-
->>>>>>> upstream/main
