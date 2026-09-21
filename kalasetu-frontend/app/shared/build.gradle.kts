@@ -109,13 +109,14 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.coil.compose)
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
             implementation(libs.apollo.runtime)
             implementation(libs.filekit.core)
             implementation(libs.filekit.compose)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.coil.network.ktor3)
         }
 
         iosMain.dependencies {
@@ -141,5 +142,6 @@ dependencies {
 apollo {
     service("service") {
         packageName.set("com.example.kalasetu")
+        mapScalar("Upload", "com.apollographql.apollo.api.Upload")
     }
 }

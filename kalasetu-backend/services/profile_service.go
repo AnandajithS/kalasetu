@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"strings"
 	"kalasetu/models"
 	"kalasetu/repos"
 	"kalasetu/storage"
@@ -49,14 +50,7 @@ func (s *profileService) GetProfile(ctx context.Context, userID int) (*models.Pr
 
 	profile.ArtworksImages = make([]string, 0, len(artworksKeys))
 	for _, key := range artworksKeys {
-		if key != "" && s.storage != nil {
-			url, err := s.storage.GetURL(ctx, key)
-			if err == nil {
-				profile.ArtworksImages = append(profile.ArtworksImages, url)
-				continue
-			}
-		}
-		profile.ArtworksImages = append(profile.ArtworksImages, key)
+		profile.ArtworksImages = append(profile.ArtworksImages, mediaURL(ctx, s.storage, key))
 	}
 
 	profile.TotalLikes, err = s.profileRepo.CountTotalLikes(ctx, userID)
@@ -69,21 +63,45 @@ func (s *profileService) GetProfile(ctx context.Context, userID int) (*models.Pr
 		return nil, err
 	}
 
-	if s.storage != nil {
-		for i := range recentPosts {
-			if recentPosts[i].MediaURI != "" {
-				if url, err := s.storage.GetURL(ctx, recentPosts[i].MediaURI); err == nil {
-					recentPosts[i].MediaURI = url
-				}
-			}
-		}
+	for i := range recentPosts {
+		recentPosts[i].MediaURI = mediaURL(ctx, s.storage, recentPosts[i].MediaURI)
 	}
 	profile.RecentPosts = recentPosts
 
-	profile.Followers = 0
-	profile.Following = 0
-	profile.Skills = []string{}
-	profile.Achievements = []models.Achievement{}
+	profile.Followers, err = s.profileRepo.CountFollowers(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	profile.Following, err = s.profileRepo.CountFollowing(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	profile.Skills, err = s.profileRepo.ListSkills(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	profile.Achievements, err = s.profileRepo.ListAchievements(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
 
 	return profile, nil
+}
+
+// mediaURL resolves a stored object key to a public URL. Keys that are already
+// absolute URLs (e.g. seeded placeholder images) are returned unchanged.
+func mediaURL(ctx context.Context, s storage.ObjectStorage, key string) string {
+	if key == "" || s == nil {
+		return key
+	}
+	if strings.HasPrefix(key, "http://") || strings.HasPrefix(key, "https://") {
+		return key
+	}
+	if url, err := s.GetURL(ctx, key); err == nil {
+		return url
+	}
+	return key
 }

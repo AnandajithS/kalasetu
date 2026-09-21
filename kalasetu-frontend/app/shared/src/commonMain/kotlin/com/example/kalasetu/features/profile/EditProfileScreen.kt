@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,15 +44,14 @@ import androidx.compose.ui.unit.sp
 private val ErrorRed      = Color(0xFFB00020)
 
 
+
 data class EditProfileState(
     val name: String = "",
-    val username: String = "",
     val location: String = "",
     val bio: String = "",
     val email: String = "",
     val avatarBytes: ByteArray? = null,
     val nameError: String? = null,
-    val usernameError: String? = null,
     val emailError: String? = null,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -61,7 +61,6 @@ data class EditProfileState(
         other as EditProfileState
 
         if (name != other.name) return false
-        if (username != other.username) return false
         if (location != other.location) return false
         if (bio != other.bio) return false
         if (email != other.email) return false
@@ -70,19 +69,16 @@ data class EditProfileState(
             if (!avatarBytes.contentEquals(other.avatarBytes)) return false
         } else if (other.avatarBytes != null) return false
         if (nameError != other.nameError) return false
-        if (usernameError != other.usernameError) return false
         return emailError == other.emailError
     }
 
     override fun hashCode(): Int {
         var result = name.hashCode()
-        result = 31 * result + username.hashCode()
         result = 31 * result + location.hashCode()
         result = 31 * result + bio.hashCode()
         result = 31 * result + email.hashCode()
         result = 31 * result + (avatarBytes?.contentHashCode() ?: 0)
         result = 31 * result + (nameError?.hashCode() ?: 0)
-        result = 31 * result + (usernameError?.hashCode() ?: 0)
         result = 31 * result + (emailError?.hashCode() ?: 0)
         return result
     }
@@ -101,7 +97,6 @@ fun EditProfileScreen(
         mutableStateOf(
             EditProfileState(
                 name     = profile.name,
-                username = profile.username,
                 location = profile.location,
                 bio      = profile.bio,
                 email    = profile.email,
@@ -120,12 +115,6 @@ fun EditProfileScreen(
 
     fun validate(): Boolean {
         val nameErr = if (state.name.isBlank()) "Name cannot be empty" else null
-        val usernameErr = when {
-            state.username.isBlank()     -> "Username cannot be empty"
-            state.username.contains(" ") -> "Username cannot contain spaces"
-            state.username.length < 3    -> "At least 3 characters"
-            else                         -> null
-        }
         val emailErr = when {
             state.email.isBlank()        -> "Email cannot be empty"
             !state.email.contains("@")   -> "Enter a valid email"
@@ -133,15 +122,13 @@ fun EditProfileScreen(
         }
         state = state.copy(
             nameError     = nameErr,
-            usernameError = usernameErr,
             emailError    = emailErr
         )
-        return (nameErr == null) && (usernameErr == null) && (emailErr == null)
+        return (nameErr == null) && (emailErr == null)
     }
 
     fun buildUpdatedProfile() = profile.copy(
         name     = state.name.trim(),
-        username = state.username.trim(),
         location = state.location.trim(),
         bio      = state.bio.trim(),
         email    = state.email.trim(),
@@ -155,6 +142,7 @@ fun EditProfileScreen(
             .imePadding()
     ) {
         // Header
+
         EditProfileHeader(
             initials = state.name.toInitials().ifBlank { profile.name.toInitials() },
             avatarBytes = state.avatarBytes,
@@ -177,25 +165,15 @@ fun EditProfileScreen(
             EditField(
                 label         = "Full Name",
                 value         = state.name,
-                placeholder   = "e.g. Sarah Anderson",
+                placeholder   = "Enter your full name",
                 icon          = Icons.Default.Person,
                 error         = state.nameError,
             ) { state = state.copy(name = it, nameError = null) }
 
             EditField(
-                label         = "Username",
-                value         = state.username,
-                placeholder   = "e.g. sarahart",
-                icon          = Icons.Default.Tag,
-                error         = state.usernameError,
-                prefix        = "@",
-                onValueChange = { state = state.copy(username = it, usernameError = null) }
-            )
-
-            EditField(
                 label         = "Location",
                 value         = state.location,
-                placeholder   = "e.g. San Francisco, CA",
+                placeholder   = "Enter your city",
                 icon          = Icons.Default.LocationOn,
                 onValueChange = { state = state.copy(location = it) }
             )
@@ -211,7 +189,7 @@ fun EditProfileScreen(
             EditField(
                 label         = "Email",
                 value         = state.email,
-                placeholder   = "e.g. sarah@email.com",
+                placeholder   = "Enter your email",
                 icon          = Icons.Default.Email,
                 error         = state.emailError,
                 onValueChange = { state = state.copy(email = it, emailError = null) }
@@ -299,44 +277,57 @@ private fun EditProfileHeader(
                     brush = Brush.linearGradient(listOf(BrandPurple, LightPurple))
                 )
         ) {
-            // Back — top-left
-            IconButton(
-                onClick  = onBack,
+
+            Row(
                 modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(top = 12.dp, start = 8.dp)
+                    .fillMaxWidth()
+                    .padding(
+                        top = 48.dp,
+                        start = 8.dp,
+                        end = 8.dp
+                    ),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint               = Color.White
+                // Back
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White
+                    )
+                }
+
+                // Title
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Edit Profile",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                }
+
+                // Save
+                Text(
+                    text = "Save",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onSave)
+                        .padding(
+                            horizontal = 12.dp,
+                            vertical = 12.dp
+                        )
                 )
             }
-
-            // Title — top-center
-            Text(
-                text       = "Edit Profile",
-                fontSize   = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color      = Color.White,
-                modifier   = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 32.dp)
-            )
-
-            // Save text button — top-right
-            Text(
-                text       = "Save",
-                fontSize   = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                color      = Color.White,
-                modifier   = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 32.dp, end = 16.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable(onClick = onSave)
-                    .padding(horizontal = 12.dp, vertical = 12.dp)
-            )
         }
 
         // Avatar

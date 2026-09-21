@@ -5,6 +5,7 @@ import "kalasetu/services"
 type Resolver struct {
 	eventService       services.EventService
 	applicationService services.ApplicationService
+	opportunityService services.OpportunityService
 	postService        services.PostService
 	commentService     services.CommentService
 	likeService        services.LikeService
@@ -15,6 +16,7 @@ type Resolver struct {
 func NewResolver(
 	eventService services.EventService,
 	applicationService services.ApplicationService,
+	opportunityService services.OpportunityService,
 	postService services.PostService,
 	commentService services.CommentService,
 	likeService services.LikeService,
@@ -24,6 +26,7 @@ func NewResolver(
 	return &Resolver{
 		eventService:       eventService,
 		applicationService: applicationService,
+		opportunityService: opportunityService,
 		postService:        postService,
 		commentService:     commentService,
 		likeService:        likeService,
